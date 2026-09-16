@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Fredoka', sans-serif;
+}
+
+@layer utilities {
+  .btn-chunky {
+    @apply relative overflow-hidden font-bold transition-all duration-200 active:translate-y-1 active:shadow-[0_0px_0_0] select-none;
+  }
+  
+  .btn-chunky-purple {
+    @apply bg-purple-600 hover:bg-purple-500 text-white border-2 border-purple-900 shadow-[0_6px_0_0_#3b0764,0_0_15px_rgba(168,85,247,0.4)] rounded-2xl px-6 py-3;
+  }
+
+  .btn-chunky-green {
+    @apply bg-emerald-500 hover:bg-emerald-400 text-white border-2 border-emerald-900 shadow-[0_6px_0_0_#064e3b,0_0_15px_rgba(16,185,129,0.4)] rounded-2xl px-6 py-3;
+  }
+
+  .btn-chunky-pink {
+    @apply bg-pink-600 hover:bg-pink-500 text-white border-2 border-pink-900 shadow-[0_6px_0_0_#831843,0_0_15px_rgba(236,72,153,0.4)] rounded-2xl px-6 py-3;
+  }
+
+  .btn-chunky-gray {
+    @apply bg-zinc-700 hover:bg-zinc-600 text-white border-2 border-zinc-900 shadow-[0_6px_0_0_#18181b] rounded-2xl px-6 py-3;
+  }
+  
+  .chunky-panel {
+    @apply bg-zinc-900 border-4 border-black shadow-[8px_8px_0_0_#000000] rounded-3xl relative;
+  }
+}
+
+body {
+  font-family: 'Fredoka', sans-serif;
+  background-color: #09090b; /* Tailwind zinc-950 */
+  color: #f4f4f5; /* Tailwind zinc-100 */
+}
