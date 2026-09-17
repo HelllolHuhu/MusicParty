@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Neck Shadow & Neck -->
+  <path d="M82 145 L82 185 L118 185 L118 145 Z" fill="currentColor" />
+  <path d="M82 145 C82 145 100 155 118 145 L118 152 C100 162 82 152 82 152 Z" fill="#000000" opacity="0.15" />
+  
+  <!-- Left Ear -->
+  <circle cx="48" cy="115" r="14" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  <path d="M47 110 C44 113 44 118 48 120" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6" />
+  
+  <!-- Right Ear -->
+  <circle cx="152" cy="115" r="14" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  <path d="M153 110 C156 113 156 118 152 120" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6" />
+  
+  <!-- Head Shape (Round / Oval) -->
+  <path d="M52 110 C52 65 72 50 100 50 C128 50 148 65 148 110 C148 148 132 165 100 165 C68 165 52 148 52 110 Z" fill="currentColor" stroke="#1f2937" stroke-width="4" stroke-linejoin="round" />
+  
+  <!-- Nose & Mouth Base -->
+  <path d="M96 118 C98 122 102 122 104 118" stroke="#1f2937" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M92 138 C97 142 103 142 108 138" stroke="#1f2937" stroke-width="3.5" stroke-linecap="round" fill="none" />
+</svg>

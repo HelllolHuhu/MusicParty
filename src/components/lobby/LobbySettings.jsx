@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { ref, update } from 'firebase/database';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AVAILABLE_GENRES = ["Pop", "Rock", "Hip-Hop", "EDM", "Lo-Fi", "Trap", "Acoustic", "Synthpop 80s", "Reggaeton", "Metal"];
 
 export default function LobbySettings({ roomId, roomData, isHost }) {
-  // Local state for immediate UI feedback, synced to DB on change
+  const { t } = useLanguage();
   const [maxPlayers, setMaxPlayers] = useState(roomData?.settings?.maxPlayers || 10);
   const [timeMinutes, setTimeMinutes] = useState(roomData?.settings?.timeMinutes || 10);
   const [genres, setGenres] = useState(roomData?.settings?.genres || ["Pop", "Hip-Hop", "EDM", "Lo-Fi"]);
@@ -43,15 +44,15 @@ export default function LobbySettings({ roomId, roomData, isHost }) {
   return (
     <div className={`chunky-panel p-6 ${!isHost && 'opacity-80 pointer-events-none'}`}>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-pink-400">Nastavenia Hry</h3>
-        {!isHost && <span className="text-xs bg-gray-900 px-2 py-1 rounded text-gray-500 font-bold uppercase">Iba Host</span>}
+        <h3 className="text-xl font-bold text-pink-400">{t('settings.title')}</h3>
+        {!isHost && <span className="text-xs bg-gray-900 px-2 py-1 rounded text-gray-500 font-bold uppercase">{t('settings.hostOnly')}</span>}
       </div>
 
       <div className="space-y-6">
         {/* Sliders */}
         <div>
           <div className="flex justify-between mb-2">
-            <label className="font-bold text-gray-300">Max Hráčov</label>
+            <label className="font-bold text-gray-300">{t('settings.maxPlayers')}</label>
             <span className="font-black text-white">{maxPlayers}</span>
           </div>
           <input 
@@ -65,7 +66,7 @@ export default function LobbySettings({ roomId, roomData, isHost }) {
 
         <div>
           <div className="flex justify-between mb-2">
-            <label className="font-bold text-gray-300">Čas na tvorbu</label>
+            <label className="font-bold text-gray-300">{t('settings.timeMinutes')}</label>
             <span className="font-black text-white">{timeMinutes} min</span>
           </div>
           <input 
@@ -79,7 +80,7 @@ export default function LobbySettings({ roomId, roomData, isHost }) {
 
         {/* Genres */}
         <div>
-          <label className="font-bold text-gray-300 block mb-3">Hudobné Žánre (losuje sa)</label>
+          <label className="font-bold text-gray-300 block mb-3">{t('settings.genres')}</label>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_GENRES.map(g => {
               const active = genres.includes(g);

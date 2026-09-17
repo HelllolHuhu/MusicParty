@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Neck -->
+  <path d="M84 145 L84 185 L116 185 L116 145 Z" fill="currentColor" />
+  <path d="M84 145 C84 145 100 154 116 145 L116 151 C100 160 84 151 84 151 Z" fill="#000000" opacity="0.15" />
+  
+  <!-- Ears -->
+  <circle cx="48" cy="112" r="13" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  <circle cx="152" cy="112" r="13" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  
+  <!-- Head Shape (Heart / Slim Pointed Chin) -->
+  <path d="M50 100 C50 58 72 46 100 46 C128 46 150 58 150 100 C150 126 130 152 100 166 C70 152 50 126 50 100 Z" fill="currentColor" stroke="#1f2937" stroke-width="4" stroke-linejoin="round" />
+  
+  <!-- Nose & Mouth Base -->
+  <circle cx="100" cy="120" r="2.5" fill="#1f2937" />
+  <path d="M94 140 C97 143 103 143 106 140" stroke="#1f2937" stroke-width="3" stroke-linecap="round" fill="none" />
+</svg>

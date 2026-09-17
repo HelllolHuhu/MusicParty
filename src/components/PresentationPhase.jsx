@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { ref, update, set } from 'firebase/database';
 import * as Tone from 'tone';
+import { useLanguage } from '../context/LanguageContext';
 
 const ROWS = 4;
 const COLS = 16;
 const NOTES = ["C4", "E4", "G4", "C5"];
 
 export default function PresentationPhase({ roomId, roomData, playerId }) {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState(20);
   const [hasVoted, setHasVoted] = useState(false);
   const [voteValue, setVoteValue] = useState(0);
@@ -122,11 +124,15 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
       <div className="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center">
         
         <div className="mb-8">
-          <h2 className="text-gray-400 uppercase tracking-widest mb-2">Teraz prezentuje</h2>
+          <h2 className="text-gray-400 uppercase tracking-widest mb-2">
+            {t('presentation.nowPresenting')}
+          </h2>
           <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-            {isMe ? "TVOJ RAD!" : currentPresenterName}
+            {isMe ? t('presentation.yourTurn') : currentPresenterName}
           </div>
-          <div className="text-sm text-gray-500 mt-2">Štýl: {roomData.currentStyle}</div>
+          <div className="text-sm text-gray-500 mt-2">
+            {t('presentation.style')} {roomData.currentStyle}
+          </div>
         </div>
 
         <div className="text-6xl font-mono mb-8 font-bold text-white">
@@ -138,9 +144,11 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
 
         {!isMe ? (
           <div className="bg-gray-700 p-6 rounded-xl mt-8">
-            <h3 className="text-xl font-bold mb-4">Hodnotenie</h3>
+            <h3 className="text-xl font-bold mb-4">{t('presentation.rating')}</h3>
             {hasVoted ? (
-              <div className="text-green-400 text-lg font-bold">Hlas zaznamenaný! ({voteValue} / 5)</div>
+              <div className="text-green-400 text-lg font-bold">
+                {t('presentation.voteRecorded')} ({voteValue} / 5)
+              </div>
             ) : (
               <div className="flex justify-center gap-4">
                 {[1, 2, 3, 4, 5].map(star => (
@@ -157,7 +165,7 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
           </div>
         ) : (
           <div className="text-xl text-yellow-400 animate-pulse mt-8">
-            Ostatní práve počúvajú tvoj výtvor!
+            {t('presentation.othersListening')}
           </div>
         )}
 

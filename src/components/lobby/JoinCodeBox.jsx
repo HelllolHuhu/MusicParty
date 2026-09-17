@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { FaEye, FaEyeSlash, FaCopy, FaCheck } from 'react-icons/fa';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function JoinCodeBox({ roomId }) {
+  const { t } = useLanguage();
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -15,7 +17,9 @@ export default function JoinCodeBox({ roomId }) {
 
   return (
     <div className="chunky-panel p-6 text-center">
-      <h3 className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-sm">Pozvi Kamošov</h3>
+      <h3 className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-sm">
+        {t('joinCode.inviteFriends')}
+      </h3>
       
       <div className="flex items-center justify-center gap-4 mb-4">
         <div className="bg-gray-900 border-2 border-gray-700 rounded-xl px-6 py-3 font-mono text-4xl font-black tracking-[0.2em] relative group cursor-pointer"
@@ -37,7 +41,7 @@ export default function JoinCodeBox({ roomId }) {
         }`}
       >
         {copied ? <FaCheck /> : <FaCopy />}
-        {copied ? 'Skopírované!' : 'Kopírovať invite link'}
+        {copied ? t('joinCode.copied') : t('joinCode.copyInviteLink')}
       </button>
     </div>
   );

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import * as Tone from 'tone';
-import { FaPlay, FaPause, FaStop, FaMicrophone, FaTrash, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { FaPlay, FaStop, FaMicrophone, FaTrash, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { useLanguage } from '../../../context/LanguageContext';
 
-// Fake samples for MVP
 const SAMPLES = [
   { id: 's1', name: 'Trap Kick', category: 'Drums', color: 'bg-red-500' },
   { id: 's2', name: 'Hi-Hat Roll', category: 'Drums', color: 'bg-orange-500' },
@@ -12,9 +11,9 @@ const SAMPLES = [
 ];
 
 export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFinish }) {
+  const { t } = useLanguage();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState(() => {
-    // Load from localStorage if exists
     const saved = localStorage.getItem(`track_${roomId}_${playerId}`);
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
@@ -34,7 +33,6 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
   // Save to local storage on change
   useEffect(() => {
     localStorage.setItem(`track_${roomId}_${playerId}`, JSON.stringify(tracks));
-    // Sync Tone.js
     import('./AudioEngine').then(({ audioEngine }) => {
       audioEngine.syncTracks(tracks);
     });
@@ -50,9 +48,6 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
     });
   }, [isPlaying]);
 
-  // Audio Engine integration would go here (Tone.js)
-  // For now we just implement the UI and state
-
   const handleDrop = (trackId, e) => {
     e.preventDefault();
     const sampleData = e.dataTransfer.getData('sample');
@@ -60,7 +55,6 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
     
     const sample = JSON.parse(sampleData);
     
-    // Calculate drop time based on mouse X relative to track width
     const trackRect = e.currentTarget.getBoundingClientRect();
     const xPos = e.clientX - trackRect.left;
     const ratio = xPos / trackRect.width;
@@ -76,7 +70,7 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
             name: sample.name,
             color: sample.color,
             startAt: dropTime, 
-            duration: 10 // fake 10s duration
+            duration: 10
           }]
         };
       }
@@ -112,17 +106,16 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         
-        // Add to first vocal track
         setTracks(prev => {
           const newTracks = [...prev];
           const vTrack = newTracks.find(t => t.type === 'vocal');
           if (vTrack) {
             vTrack.clips.push({
               id: `vocal_${Date.now()}`,
-              name: 'Vocal Take',
+              name: t('game.vocalTake'),
               color: 'bg-green-500',
-              startAt: 0, // In real life, calculate based on current playback head
-              duration: 15, // fake duration
+              startAt: 0,
+              duration: 15,
               url: url
             });
           }
@@ -136,7 +129,7 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
       setIsRecording(true);
     } catch (err) {
       console.error("Mic access denied", err);
-      alert("Povoľ mikrofón!");
+      alert(t('game.allowMic'));
     }
   };
 
@@ -153,7 +146,7 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
       {/* Sample Browser (Left Sidebar) */}
       <div className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
         <div className="p-4 border-b border-zinc-800 font-bold text-pink-500 uppercase tracking-widest text-sm">
-          Zvuková Knižnica
+          {t('game.soundLibrary')}
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {SAMPLES.map(s => (
@@ -198,13 +191,12 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
           </div>
           
           <button onClick={() => onFinish(tracks)} className="btn-chunky btn-chunky-green">
-            Dokončiť Track
+            {t('game.finishTrack')}
           </button>
         </div>
 
         {/* Timeline Headers */}
         <div className="h-8 bg-zinc-900/50 flex ml-48 border-b border-zinc-800 relative">
-           {/* Fake time markers 0:00 to 3:00 */}
            {[0, 30, 60, 90, 120, 150, 180].map(sec => (
              <div key={sec} className="absolute text-xs text-zinc-500 font-mono" style={{ left: `${(sec/180)*100}%`, transform: 'translateX(-50%)' }}>
                {Math.floor(sec/60)}:{(sec%60).toString().padStart(2,'0')}
@@ -237,7 +229,6 @@ export default function MusicWorkspace({ roomId, playerId, timeRemaining, onFini
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(track.id, e)}
               >
-                {/* Horizontal grid lines placeholder */}
                 <div className="absolute inset-0 opacity-10 bg-[linear-gradient(90deg,_#ffffff_1px,_transparent_1px)] bg-[length:16.66%_100%] pointer-events-none"></div>
 
                 {track.clips.map(clip => (

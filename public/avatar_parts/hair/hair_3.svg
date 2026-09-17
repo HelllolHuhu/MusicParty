@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Shaved side texture lines -->
+  <path d="M52 75 L62 82 M52 83 L62 90 M148 75 L138 82 M148 83 L138 90" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
+  <!-- Mohawk spikes -->
+  <path d="M84 72 L86 24 L98 42 L106 18 L114 44 L122 28 L122 72 C114 68 94 68 84 72 Z" fill="currentColor" stroke="#1f2937" stroke-width="4" stroke-linejoin="round" />
+  <!-- Highlight streak -->
+  <path d="M104 26 L108 44 L114 65" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.35" />
+</svg>

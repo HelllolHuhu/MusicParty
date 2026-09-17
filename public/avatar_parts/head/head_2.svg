@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Neck -->
+  <path d="M78 145 L78 185 L122 185 L122 145 Z" fill="currentColor" />
+  <path d="M78 145 C78 145 100 156 122 145 L122 153 C100 164 78 153 78 153 Z" fill="#000000" opacity="0.15" />
+  
+  <!-- Ears -->
+  <rect x="36" y="102" width="14" height="26" rx="7" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  <rect x="150" y="102" width="14" height="26" rx="7" fill="currentColor" stroke="#1f2937" stroke-width="3.5" />
+  
+  <!-- Head Shape (Angular / Strong Jaw) -->
+  <path d="M52 100 C52 60 70 48 100 48 C130 48 148 60 148 100 L148 128 L126 160 L74 160 L52 128 Z" fill="currentColor" stroke="#1f2937" stroke-width="4" stroke-linejoin="round" />
+  
+  <!-- Nose & Mouth Base -->
+  <path d="M95 116 L100 122 L105 116" stroke="#1f2937" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M90 140 L110 140" stroke="#1f2937" stroke-width="3.5" stroke-linecap="round" />
+</svg>

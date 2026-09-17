@@ -3,15 +3,16 @@ import { db } from '../firebase';
 import { ref, update } from 'firebase/database';
 import SongCard from './game/SongCard';
 import MusicWorkspace from './game/workspace/MusicWorkspace';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function GamePhase({ roomId, roomData, playerId }) {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState(600);
   const [showSongCard, setShowSongCard] = useState(true);
   
   const isHost = roomData.host === playerId;
 
   useEffect(() => {
-    // Calculate remaining time based on startTime and gameDurationMs
     const gameDurationMs = roomData.gameDurationMs || (10 * 60 * 1000);
     
     const interval = setInterval(() => {
@@ -22,7 +23,6 @@ export default function GamePhase({ roomId, roomData, playerId }) {
       
       if (remaining <= 0) {
         clearInterval(interval);
-        // Host automatically moves the game to presenting phase
         if (isHost) {
           moveToPresentation();
         }
@@ -42,20 +42,13 @@ export default function GamePhase({ roomId, roomData, playerId }) {
     });
   };
 
-  const handleFinishTrack = (tracks) => {
-    // Save the finalized track structure to firebase
-    // Because tracks contains Blob URLs which can't be saved to Firebase directly,
-    // in a real app we would upload the blobs to Firebase Storage and save the download URLs.
-    // For this MVP, we save the structure (and assume we'll stringify small audio blocks or upload later).
-    
+  const handleFinishTrack = () => {
     update(ref(db, `rooms/${roomId}/tracks/${playerId}`), {
       ready: true,
-      // Just saving a placeholder for the presentation phase for now
       timestamp: Date.now()
     });
     
-    // Alert the user that they are done early
-    alert("Track uložený! Čakaj na ostatných.");
+    alert(t('game.trackSavedAlert'));
   };
 
   return (
@@ -74,7 +67,7 @@ export default function GamePhase({ roomId, roomData, playerId }) {
           FL PARTY STUDIO
         </div>
         <div className="font-bold text-zinc-400">
-          Žáner: <span className="text-white ml-2">{roomData.currentStyle}</span>
+          {t('game.genre')} <span className="text-white ml-2">{roomData.currentStyle}</span>
         </div>
       </div>
 

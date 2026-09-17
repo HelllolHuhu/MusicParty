@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Goatee on chin -->
+  <path d="M84 145 C86 168 94 176 100 178 C106 176 114 168 116 145 C110 150 90 150 84 145 Z" fill="currentColor" stroke="#1f2937" stroke-width="3.5" stroke-linejoin="round" />
+  <!-- Soul patch -->
+  <path d="M96 142 L104 142 L100 148 Z" fill="currentColor" />
+  <!-- Clean Trimmed Mustache -->
+  <path d="M86 133 C92 130 97 131 99 135 C101 131 106 130 114 133 C116 137 110 140 100 140 C90 140 84 137 86 133 Z" fill="currentColor" stroke="#1f2937" stroke-width="3" stroke-linejoin="round" />
+</svg>

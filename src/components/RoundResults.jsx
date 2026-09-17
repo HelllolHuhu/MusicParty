@@ -1,8 +1,10 @@
 import { useMemo, useEffect } from 'react';
 import { db } from '../firebase';
 import { ref, update } from 'firebase/database';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RoundResults({ roomId, roomData, playerId }) {
+  const { t } = useLanguage();
   const isHost = roomData.host === playerId;
 
   // Calculate results
@@ -37,7 +39,7 @@ export default function RoundResults({ roomId, roomData, playerId }) {
       update(ref(db), updates);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
   const nextRound = () => {
     const styles = ["80s Synthpop", "Lo-Fi Hip Hop", "Punk Rock", "Trap Beat", "Eurodance 90s", "Reggaeton", "Acoustic Ballad"];
@@ -67,7 +69,7 @@ export default function RoundResults({ roomId, roomData, playerId }) {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center">
           <h1 className="text-5xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-500">
-            Koniec Hry!
+            {t('results.gameOver')}
           </h1>
           <div className="space-y-4">
             {finalScores.map((p, i) => (
@@ -84,7 +86,7 @@ export default function RoundResults({ roomId, roomData, playerId }) {
             onClick={() => window.location.reload()}
             className="mt-8 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-xl transition-colors"
           >
-            Späť do menu
+            {t('results.backToMenu')}
           </button>
         </div>
       </div>
@@ -94,16 +96,16 @@ export default function RoundResults({ roomId, roomData, playerId }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center">
-        <h2 className="text-3xl font-bold mb-8">Výsledky Kola</h2>
+        <h2 className="text-3xl font-bold mb-8">{t('results.roundResults')}</h2>
         
         <div className="space-y-3 mb-8">
-          {results.map((r, i) => (
+          {results.map((r) => (
             <div key={r.id} className="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
               <span className="font-bold text-lg">{r.name}</span>
               <div className="flex items-center gap-2">
                 <span className="text-yellow-400 text-2xl">★</span>
                 <span className="text-xl font-black">{r.avg}</span>
-                <span className="text-gray-400 text-sm">({r.votesCount} hlasov)</span>
+                <span className="text-gray-400 text-sm">({r.votesCount} {t('results.votes')})</span>
               </div>
             </div>
           ))}
@@ -115,18 +117,18 @@ export default function RoundResults({ roomId, roomData, playerId }) {
               onClick={nextRound}
               className="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-4 px-6 rounded-xl text-lg transition-transform hover:scale-105"
             >
-              Ďalšie Kolo
+              {t('results.nextRound')}
             </button>
             <button 
               onClick={endGame}
               className="bg-red-500 hover:bg-red-400 text-white font-bold py-4 px-6 rounded-xl transition-colors"
             >
-              Ukončiť hru
+              {t('results.endGame')}
             </button>
           </div>
         ) : (
           <div className="text-gray-400 animate-pulse">
-            Čaká sa na hosta...
+            {t('lobby.waitingHost')}
           </div>
         )}
       </div>

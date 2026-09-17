@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Cute Eyebrows -->
+  <path d="M68 82 Q78 78 88 83" stroke="#1f2937" stroke-width="3.5" stroke-linecap="round" />
+  <path d="M132 82 Q122 78 112 83" stroke="#1f2937" stroke-width="3.5" stroke-linecap="round" />
+  
+  <!-- Left Eye -->
+  <ellipse cx="76" cy="100" rx="14" ry="14" fill="#ffffff" stroke="#1f2937" stroke-width="3.5" />
+  <!-- Iris -->
+  <ellipse cx="76" cy="101" rx="10" ry="11" fill="currentColor" />
+  <ellipse cx="76" cy="103" rx="6.5" ry="7" fill="#111827" />
+  <!-- Big Sparkle Highlights -->
+  <circle cx="73" cy="96" r="3.8" fill="#ffffff" />
+  <circle cx="79" cy="104" r="2" fill="#ffffff" />
+  <!-- Eyelash / Outline top -->
+  <path d="M62 96 Q76 88 90 96" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" />
+  
+  <!-- Right Eye -->
+  <ellipse cx="124" cy="100" rx="14" ry="14" fill="#ffffff" stroke="#1f2937" stroke-width="3.5" />
+  <!-- Iris -->
+  <ellipse cx="124" cy="101" rx="10" ry="11" fill="currentColor" />
+  <ellipse cx="124" cy="103" rx="6.5" ry="7" fill="#111827" />
+  <!-- Big Sparkle Highlights -->
+  <circle cx="121" cy="96" r="3.8" fill="#ffffff" />
+  <circle cx="127" cy="104" r="2" fill="#ffffff" />
+  <!-- Eyelash / Outline top -->
+  <path d="M110 96 Q124 88 138 96" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" />
+</svg>

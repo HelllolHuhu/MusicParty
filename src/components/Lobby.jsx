@@ -5,14 +5,16 @@ import CharacterCreator from './lobby/CharacterCreator';
 import LobbySettings from './lobby/LobbySettings';
 import PlayerList from './lobby/PlayerList';
 import JoinCodeBox from './lobby/JoinCodeBox';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function Lobby({ onJoin, initialRoomId }) {
+export default function Lobby({ onJoin, initialRoomId, initialName, initialAvatarConfig }) {
+  const { t } = useLanguage();
   const [roomId, setRoomId] = useState(initialRoomId || '');
   const [error, setError] = useState('');
   
   // State from CharacterCreator
-  const [playerName, setPlayerName] = useState('');
-  const [avatarConfig, setAvatarConfig] = useState(null);
+  const [playerName, setPlayerName] = useState(initialName || '');
+  const [avatarConfig, setAvatarConfig] = useState(initialAvatarConfig || null);
 
   const handleCharacterChange = useCallback((newName, newConfig) => {
     setPlayerName(newName);
@@ -20,19 +22,19 @@ export default function Lobby({ onJoin, initialRoomId }) {
   }, []);
 
   const handleCreate = async () => {
-    if (!playerName.trim()) return setError('Zadaj svoje meno!');
+    if (!playerName.trim()) return setError(t('lobby.enterNameError'));
     const newRoomId = Math.random().toString(36).substr(2, 6).toUpperCase();
     onJoin(newRoomId, playerName, avatarConfig);
   };
 
   const handleJoin = async () => {
-    if (!playerName.trim()) return setError('Zadaj svoje meno!');
-    if (!roomId.trim()) return setError('Zadaj kód miestnosti!');
+    if (!playerName.trim()) return setError(t('lobby.enterNameError'));
+    if (!roomId.trim()) return setError(t('lobby.enterRoomError'));
     
     const roomRef = ref(db, `rooms/${roomId.toUpperCase()}`);
     const snapshot = await get(roomRef);
     if (!snapshot.exists()) {
-      return setError('Miestnosť neexistuje!');
+      return setError(t('lobby.roomNotFound'));
     }
     
     const roomData = snapshot.val();
@@ -40,7 +42,7 @@ export default function Lobby({ onJoin, initialRoomId }) {
     const currentPlayersCount = Object.keys(roomData?.players || {}).length;
     
     if (currentPlayersCount >= maxPlayers) {
-      return setError('Miestnosť je plná!');
+      return setError(t('lobby.roomFull'));
     }
 
     onJoin(roomId.toUpperCase(), playerName, avatarConfig);
@@ -62,27 +64,31 @@ export default function Lobby({ onJoin, initialRoomId }) {
         )}
 
         <div className="mb-8">
-          <CharacterCreator onChange={handleCharacterChange} initialName={playerName} />
+          <CharacterCreator 
+            onChange={handleCharacterChange} 
+            initialName={playerName} 
+            initialConfig={avatarConfig} 
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="chunky-panel p-6 flex flex-col justify-center">
-            <h2 className="text-2xl font-bold mb-4 text-center">Nová Hra</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">{t('lobby.newGame')}</h2>
             <button 
               onClick={handleCreate}
               className="btn-chunky btn-chunky-purple w-full text-xl py-6"
             >
-              Vytvoriť Miestnosť
+              {t('lobby.createRoom')}
             </button>
           </div>
 
           <div className="chunky-panel p-6 flex flex-col justify-center">
-            <h2 className="text-2xl font-bold mb-4 text-center">Pripojiť sa</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">{t('lobby.joinGame')}</h2>
             <div className="flex gap-2">
               <input 
                 type="text" 
                 className="flex-1 bg-gray-700 border-4 border-gray-900 rounded-2xl p-4 text-xl font-black text-center text-white focus:outline-none focus:border-pink-500 uppercase shadow-inner placeholder-gray-500"
-                placeholder="KÓD"
+                placeholder={t('lobby.roomCode')}
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                 maxLength={6}
@@ -91,7 +97,7 @@ export default function Lobby({ onJoin, initialRoomId }) {
                 onClick={handleJoin}
                 className="btn-chunky btn-chunky-gray text-xl px-8"
               >
-                Go!
+                {t('lobby.go')}
               </button>
             </div>
           </div>
@@ -102,6 +108,8 @@ export default function Lobby({ onJoin, initialRoomId }) {
 }
 
 Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarConfig }) {
+  const { t } = useLanguage();
+
   // Join the room in DB on mount if not already there
   useEffect(() => {
     if (!roomData?.players?.[playerId]) {
@@ -121,25 +129,25 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
       
       update(ref(db), updates).catch(err => {
         console.error("Firebase write error:", err);
-        alert("Chyba pri zápise do databázy: " + err.message);
+        alert(t('lobby.dbError') + err.message);
       });
     }
-  }, [roomId, playerId, playerName, avatarConfig, roomData]);
+  }, [roomId, playerId, playerName, avatarConfig, roomData, t]);
 
-  // If I got kicked, I shouldn't be here (App.jsx could handle this, but let's just force reload or alert)
+  // If I got kicked, I shouldn't be here
   useEffect(() => {
     if (roomData?.players && !roomData.players[playerId] && roomData.host) {
-      alert("Bol si vykopnutý z miestnosti!");
+      alert(t('lobby.kickedAlert'));
       window.location.href = "/";
     }
-  }, [roomData, playerId]);
+  }, [roomData, playerId, t]);
 
   const isHost = roomData?.host === playerId;
   const playersCount = Object.keys(roomData?.players || {}).length;
 
   const startGame = () => {
     if (playersCount < 2) {
-      alert("Na spustenie hry sú potrební aspoň 2 hráči!");
+      alert(t('lobby.need2Players'));
       return;
     }
 
@@ -151,7 +159,7 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
       status: 'playing',
       currentStyle: randomStyle,
       startTime: Date.now(),
-      gameDurationMs: timeMs, // save exact duration for GamePhase to use
+      gameDurationMs: timeMs,
       tracks: null,
       votes: null
     });
@@ -180,12 +188,12 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
                 disabled={playersCount < 2}
                 className={`w-full text-3xl py-6 tracking-wide uppercase ${playersCount < 2 ? 'btn-chunky btn-chunky-gray opacity-50 cursor-not-allowed' : 'btn-chunky btn-chunky-green animate-pulse'}`}
               >
-                {playersCount < 2 ? 'Čaká sa na hráčov...' : '🚀 Start Game!'}
+                {playersCount < 2 ? t('lobby.waitingPlayers') : t('lobby.startGame')}
               </button>
             ) : (
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-400 mb-2">Čaká sa na hosta...</div>
-                <div className="text-gray-500">({roomData?.players?.[roomData.host]?.name || 'Neznámy'})</div>
+                <div className="text-2xl font-bold text-gray-400 mb-2">{t('lobby.waitingHost')}</div>
+                <div className="text-gray-500">({roomData?.players?.[roomData.host]?.name || t('lobby.unknown')})</div>
               </div>
             )}
           </div>

@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
 import { db } from '../../firebase';
 import { ref, update } from 'firebase/database';
 import AvatarViewer from './AvatarViewer';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
+  const { t } = useLanguage();
   const players = Object.entries(roomData?.players || {}).map(([id, p]) => ({ id, ...p }));
   const maxPlayers = roomData?.settings?.maxPlayers || 10;
 
   const handleKick = (targetId) => {
     if (!isHost) return;
-    if (confirm("Naozaj chceš vykopnúť tohto hráča?")) {
+    if (confirm(t('playerList.kickConfirm'))) {
       const updates = {};
       updates[`rooms/${roomId}/players/${targetId}`] = null;
       update(ref(db), updates);
@@ -19,7 +20,7 @@ export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
   return (
     <div className="chunky-panel p-6 h-full flex flex-col">
       <h3 className="text-xl font-bold text-green-400 mb-4 flex justify-between items-end">
-        <span>Hráči</span>
+        <span>{t('playerList.players')}</span>
         <span className="text-sm text-gray-500">{players.length} / {maxPlayers}</span>
       </h3>
       
@@ -29,36 +30,36 @@ export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-zinc-800 border-2 border-black flex items-center justify-center overflow-hidden relative">
                 {p.avatarConfig ? (
-                  <AvatarViewer config={p.avatarConfig} seed={p.name} className="w-full h-full" />
+                  <AvatarViewer config={p.avatarConfig} className="w-full h-full" />
                 ) : (
                   <span className="font-bold text-gray-500">{p.name?.charAt(0)?.toUpperCase()}</span>
                 )}
-                </div>
-                <div>
-                  <div className="font-bold text-white text-lg">
-                    {p.name} 
-                    {p.id === roomData.host && <span className="ml-2 text-yellow-400 text-sm" title="Host">👑</span>}
-                  </div>
-                  {p.id === myPlayerId && <div className="text-xs text-green-400 font-bold uppercase tracking-wider">Ty</div>}
-                </div>
               </div>
-              
-              {isHost && p.id !== myPlayerId && (
-                <button 
-                  onClick={() => handleKick(p.id)}
-                  className="text-red-500 hover:text-red-400 hover:bg-red-500/20 p-2 rounded-lg font-bold text-sm transition-colors"
-                >
-                  KICK
-                </button>
-              )}
+              <div>
+                <div className="font-bold text-white text-lg">
+                  {p.name} 
+                  {p.id === roomData.host && <span className="ml-2 text-yellow-400 text-sm" title={t('playerList.host')}>👑</span>}
+                </div>
+                {p.id === myPlayerId && <div className="text-xs text-green-400 font-bold uppercase tracking-wider">{t('playerList.you')}</div>}
+              </div>
             </div>
+            
+            {isHost && p.id !== myPlayerId && (
+              <button 
+                onClick={() => handleKick(p.id)}
+                className="text-red-500 hover:text-red-400 hover:bg-red-500/20 p-2 rounded-lg font-bold text-sm transition-colors"
+              >
+                {t('playerList.kick')}
+              </button>
+            )}
+          </div>
         ))}
 
         {/* Empty slots placeholders */}
         {Array.from({ length: Math.max(0, maxPlayers - players.length) }).map((_, i) => (
           <div key={`empty-${i}`} className="flex items-center gap-4 p-3 rounded-2xl border-2 border-dashed border-gray-700 opacity-50">
             <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center"></div>
-            <div className="font-bold text-gray-600">Voľné miesto...</div>
+            <div className="font-bold text-gray-600">{t('playerList.emptySlot')}</div>
           </div>
         ))}
       </div>

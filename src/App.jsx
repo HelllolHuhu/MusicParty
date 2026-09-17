@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { ref, onValue, set, update } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import Lobby from './components/Lobby';
 import GamePhase from './components/GamePhase';
 import PresentationPhase from './components/PresentationPhase';
 import RoundResults from './components/RoundResults';
+import LanguageSwitcher from './components/common/LanguageSwitcher';
 
 function App() {
   const [playerId, setPlayerId] = useState(localStorage.getItem('playerId') || null);
@@ -19,7 +20,6 @@ function App() {
     const joinCode = params.get('join');
     if (joinCode && !roomId) {
       // Don't auto-set roomId yet if we don't have a player setup, just keep it in URL
-      // We will pass it to Lobby to pre-fill
     }
   }, [roomId]);
 
@@ -32,7 +32,6 @@ function App() {
       if (data) {
         setRoomData(data);
       } else {
-        // If room is deleted
         setRoomData(null);
       }
     });
@@ -70,24 +69,34 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const initialRoomId = params.get('join');
     
-    return <Lobby 
-      initialRoomId={initialRoomId}
-      onJoin={(id, name, config) => {
-        initializePlayer(name, config);
-        setRoomId(id);
-        // Clear URL without refreshing
-        window.history.replaceState({}, '', '/');
-      }} 
-    />;
+    return (
+      <div className="relative">
+        <div className="fixed top-4 right-4 z-50">
+          <LanguageSwitcher />
+        </div>
+        <Lobby 
+          initialRoomId={initialRoomId}
+          initialName={playerName}
+          initialAvatarConfig={avatarConfig}
+          onJoin={(id, name, config) => {
+            initializePlayer(name, config);
+            setRoomId(id);
+            window.history.replaceState({}, '', '/');
+          }} 
+        />
+      </div>
+    );
   }
 
-  // Room exists but no data yet (show loading only if we are not initializing it)
-  // Actually, we can just default to a temporary lobby status
   const currentRoomData = roomData || { status: 'lobby', players: {} };
 
   // Main routing based on room status
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans relative">
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {currentRoomData.status === 'lobby' && (
         <Lobby.InRoom 
           roomId={roomId} 

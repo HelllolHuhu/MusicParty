@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { FaPlay, FaPause } from 'react-icons/fa';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function SongCard({ genre, onDismiss }) {
+  const { t } = useLanguage();
   const [playing, setPlaying] = useState(false);
   const [countdown, setCountdown] = useState(10);
 
@@ -21,7 +23,6 @@ export default function SongCard({ genre, onDismiss }) {
   }, [onDismiss]);
 
   const togglePlay = () => {
-    // Fake audio playback for now
     setPlaying(!playing);
   };
 
@@ -29,9 +30,11 @@ export default function SongCard({ genre, onDismiss }) {
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
       <div className="chunky-panel max-w-md w-full bg-zinc-900 border-zinc-800 p-8 flex flex-col items-center animate-in zoom-in duration-300">
         
-        <h2 className="text-pink-500 font-bold text-xl uppercase tracking-widest mb-6">Tvoj Žáner</h2>
+        <h2 className="text-pink-500 font-bold text-xl uppercase tracking-widest mb-6">
+          {t('game.yourGenre')}
+        </h2>
         
-        {/* Cover Art Fake */}
+        {/* Cover Art */}
         <div className="w-64 h-64 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 rounded-3xl shadow-2xl border-4 border-black mb-6 flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 bg-black/20 mix-blend-overlay"></div>
           <span className="text-4xl font-black text-white text-center transform -rotate-12 drop-shadow-lg p-4">
@@ -49,14 +52,14 @@ export default function SongCard({ genre, onDismiss }) {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-white mb-2">{genre}</h1>
-          <p className="text-zinc-400 font-bold">120 BPM • Party Vibes</p>
+          <p className="text-zinc-400 font-bold">{t('game.partyVibes')}</p>
         </div>
 
         <button 
           onClick={onDismiss}
           className="btn-chunky btn-chunky-purple w-full py-4 text-xl flex justify-between px-8"
         >
-          <span>Ideme na to!</span>
+          <span>{t('game.letsGo')}</span>
           <span className="opacity-50">({countdown}s)</span>
         </button>
       </div>

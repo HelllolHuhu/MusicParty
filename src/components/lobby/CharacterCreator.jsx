@@ -1,140 +1,234 @@
-import { useState, useEffect, useMemo } from 'react';
-import { FaChevronLeft, FaChevronRight, FaDice } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { FaDice, FaChevronLeft, FaChevronRight, FaPalette } from 'react-icons/fa';
 import AvatarViewer from './AvatarViewer';
-
-const OPTIONS = {
-  eyes: ['eyes', 'round', 'smiling', 'eyesShadow', 'smilingShadow'],
-  adultEyes: ['none', 'red', 'sleepy'],
-  hair: ['mrClean', 'fonze', 'mrT', 'dougFunny', 'dannyPhantom', 'full', 'turban', 'pixie'],
-  headwear: ['none', 'headphones_dj', 'cap_backward', 'beanie'],
-  shirt: ['crew', 'open', 'collared'],
-  shirtDecal: ['none', 'gold_chain', 'silver_chain', 'tattoo'],
-  glasses: ['round', 'square', 'none'],
-  baseColor: ['f9c9b6', 'f9cb28', 'ffb057', 'ffcca5', 'e0a39a', 'd78774', 'b56752', '8d5440'],
-  shirtColor: ['9287ff', '6bc89b', 'ffb443', 'ff7474', '74aaff', 'e0e0e0', '343a40'],
-  heldItem: ['none', 'cigarette', 'vodka', 'beer', 'joint', 'mic'],
-  background: ['none', 'neon_city', 'studio', 'graffiti', 'gradient_pink', 'gradient_cyan']
-};
-
-const RANDOM_NAMES = ["Lil Fero", "DJ Kapusta", "MC Bryndza", "Traktorista", "Vejper77", "Stoned Dog", "Acid Jožo", "Párok", "Cibuľa"];
+import { useLanguage } from '../../context/LanguageContext';
+import { 
+  COLOR_PALETTES, 
+  PART_OPTIONS, 
+  DEFAULT_AVATAR_CONFIG, 
+  RANDOM_NAMES_BY_LANG 
+} from './avatarData';
 
 export default function CharacterCreator({ onChange, initialConfig, initialName }) {
+  const { t, lang } = useLanguage();
   const [name, setName] = useState(initialName || '');
-  const [config, setConfig] = useState(initialConfig || {
-    eyes: 0,
-    adultEyes: 0,
-    hair: 0,
-    headwear: 0,
-    shirt: 0,
-    shirtDecal: 0,
-    glasses: 2,
-    baseColor: 0,
-    shirtColor: 0,
-    heldItem: 0,
-    background: 4
-  });
+  const [config, setConfig] = useState(initialConfig || DEFAULT_AVATAR_CONFIG);
+  const [activeTab, setActiveTab] = useState('head'); // 'head' | 'hair' | 'eyes' | 'beard' | 'accessory'
 
-  const mappedConfig = useMemo(() => ({
-    eyes: [OPTIONS.eyes[config.eyes]],
-    hair: [OPTIONS.hair[config.hair]],
-    shirt: [OPTIONS.shirt[config.shirt]],
-    baseColor: [OPTIONS.baseColor[config.baseColor]],
-    shirtColor: [OPTIONS.shirtColor[config.shirtColor]],
-    ...(OPTIONS.glasses[config.glasses] !== 'none' ? { glasses: [OPTIONS.glasses[config.glasses]], glassesProbability: 100 } : { glassesProbability: 0 }),
-    adultEyes: OPTIONS.adultEyes[config.adultEyes],
-    headwear: OPTIONS.headwear[config.headwear],
-    shirtDecal: OPTIONS.shirtDecal[config.shirtDecal],
-    heldItem: OPTIONS.heldItem[config.heldItem],
-    background: OPTIONS.background[config.background]
-  }), [config]);
-
-  // Export state upwards
+  // Push state upwards to parent
   useEffect(() => {
-    onChange(name, mappedConfig);
-  }, [name, mappedConfig, onChange]);
+    onChange(name, config);
+  }, [name, config, onChange]);
 
-  const handleNext = (key) => {
+  const updatePart = (partKey, delta) => {
+    const options = PART_OPTIONS[partKey];
+    const currentIndex = options.findIndex(opt => opt.id === config[partKey]);
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = (safeIndex + delta + options.length) % options.length;
+    
     setConfig(prev => ({
       ...prev,
-      [key]: (prev[key] + 1) % OPTIONS[key].length
+      [partKey]: options[nextIndex].id
     }));
   };
 
-  const handlePrev = (key) => {
+  const updateColor = (colorKey, colorHex) => {
     setConfig(prev => ({
       ...prev,
-      [key]: prev[key] === 0 ? OPTIONS[key].length - 1 : prev[key] - 1
+      [colorKey]: colorHex
     }));
   };
 
   const randomizeAll = () => {
+    const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    const randomHead = randomItem(PART_OPTIONS.head).id;
+    const randomHeadColor = randomItem(COLOR_PALETTES.head);
+    
+    const randomHair = randomItem(PART_OPTIONS.hair).id;
+    const randomHairColor = randomItem(COLOR_PALETTES.hair);
+    
+    const randomEyes = randomItem(PART_OPTIONS.eyes).id;
+    const randomEyesColor = randomItem(COLOR_PALETTES.eyes);
+    
+    const randomBeard = randomItem(PART_OPTIONS.beard).id;
+    const randomBeardColor = randomHairColor;
+    
+    const randomAccessory = randomItem(PART_OPTIONS.accessory).id;
+
     setConfig({
-      eyes: Math.floor(Math.random() * OPTIONS.eyes.length),
-      adultEyes: Math.random() > 0.7 ? Math.floor(Math.random() * OPTIONS.adultEyes.length) : 0,
-      hair: Math.floor(Math.random() * OPTIONS.hair.length),
-      headwear: Math.random() > 0.7 ? Math.floor(Math.random() * OPTIONS.headwear.length) : 0,
-      shirt: Math.floor(Math.random() * OPTIONS.shirt.length),
-      shirtDecal: Math.random() > 0.7 ? Math.floor(Math.random() * OPTIONS.shirtDecal.length) : 0,
-      glasses: Math.floor(Math.random() * OPTIONS.glasses.length),
-      baseColor: Math.floor(Math.random() * OPTIONS.baseColor.length),
-      shirtColor: Math.floor(Math.random() * OPTIONS.shirtColor.length),
-      heldItem: Math.random() > 0.5 ? Math.floor(Math.random() * OPTIONS.heldItem.length) : 0,
-      background: Math.floor(Math.random() * OPTIONS.background.length)
+      head: randomHead,
+      headColor: randomHeadColor,
+      hair: randomHair,
+      hairColor: randomHairColor,
+      eyes: randomEyes,
+      eyesColor: randomEyesColor,
+      beard: randomBeard,
+      beardColor: randomBeardColor,
+      accessory: randomAccessory
     });
-    setName(RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]);
+
+    const names = RANDOM_NAMES_BY_LANG[lang] || RANDOM_NAMES_BY_LANG.en;
+    setName(names[Math.floor(Math.random() * names.length)]);
   };
 
-  const OptionRow = ({ label, stateKey }) => (
-    <div className="flex justify-between items-center bg-gray-700 rounded-xl p-2 px-4 shadow-inner mb-2">
-      <span className="font-bold text-gray-300 w-24">{label}</span>
-      <div className="flex items-center gap-4">
-        <button onClick={() => handlePrev(stateKey)} className="text-gray-400 hover:text-white hover:scale-125 transition-transform"><FaChevronLeft /></button>
-        <div className="w-16 text-center text-sm font-semibold truncate capitalize text-yellow-400">
-          {OPTIONS[stateKey][config[stateKey]]}
-        </div>
-        <button onClick={() => handleNext(stateKey)} className="text-gray-400 hover:text-white hover:scale-125 transition-transform"><FaChevronRight /></button>
-      </div>
-    </div>
-  );
+  const tabs = [
+    { key: 'head', labelKey: 'creator.tab.head', hasColor: true, colorKey: 'headColor' },
+    { key: 'hair', labelKey: 'creator.tab.hair', hasColor: true, colorKey: 'hairColor' },
+    { key: 'eyes', labelKey: 'creator.tab.eyes', hasColor: true, colorKey: 'eyesColor' },
+    { key: 'beard', labelKey: 'creator.tab.beard', hasColor: true, colorKey: 'beardColor' },
+    { key: 'accessory', labelKey: 'creator.tab.accessory', hasColor: false }
+  ];
+
+  const currentOptions = PART_OPTIONS[activeTab] || [];
+  const currentSelectedOption = currentOptions.find(opt => opt.id === config[activeTab]) || currentOptions[0];
+  const activeTabConfig = tabs.find(t => t.key === activeTab);
 
   return (
-    <div className="chunky-panel p-6 flex flex-col md:flex-row gap-8">
-      {/* Avatar Preview */}
+    <div className="chunky-panel p-6 flex flex-col md:flex-row gap-8 items-stretch">
+      {/* Left Column: Avatar Preview & Name */}
       <div className="flex-1 flex flex-col items-center justify-center">
         <AvatarViewer 
-          config={mappedConfig} 
-          seed={name} 
-          className="w-48 h-48 rounded-full border-4 border-black shadow-[4px_4px_0_0_#000] mb-6" 
+          config={config} 
+          className="w-52 h-52 rounded-3xl mb-6 shadow-[0_8px_0_0_#000]" 
         />
         
         <div className="w-full flex gap-2">
           <input
             type="text"
-            placeholder="Zadaj meno..."
+            placeholder={t('creator.enterName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="flex-1 bg-gray-700 border-2 border-gray-900 rounded-xl p-3 font-bold text-lg focus:outline-none focus:border-purple-500 shadow-inner"
+            className="flex-1 bg-gray-800 border-3 border-gray-900 rounded-2xl p-3 px-4 font-bold text-lg text-white focus:outline-none focus:border-purple-500 shadow-inner"
             maxLength={15}
           />
           <button 
+            type="button"
             onClick={randomizeAll}
-            className="btn-chunky btn-chunky-purple flex items-center justify-center w-14"
-            title="Náhodný avatar a meno"
+            className="btn-chunky btn-chunky-purple flex items-center justify-center w-14 rounded-2xl"
+            title={t('creator.randomTooltip')}
           >
             <FaDice size={24} />
           </button>
         </div>
       </div>
 
-      {/* Options Controls */}
-      <div className="flex-1">
-        <h3 className="text-xl font-bold mb-4 text-purple-300">Vzhľad Postavy</h3>
-        <OptionRow label="Farba Pleti" stateKey="baseColor" />
-        <OptionRow label="Oči" stateKey="eyes" />
-        <OptionRow label="Vlasy / Hlava" stateKey="hair" />
-        <OptionRow label="Oblečenie" stateKey="shirt" />
-        <OptionRow label="Farba odevu" stateKey="shirtColor" />
-        <OptionRow label="Okuliare" stateKey="glasses" />
+      {/* Right Column: Interactive Parts & Color Controls */}
+      <div className="flex-1 flex flex-col justify-between">
+        <div>
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-1.5 mb-5 bg-gray-900/70 p-1.5 rounded-2xl border-2 border-black">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 py-2 px-3 rounded-xl font-black text-sm transition-all text-center whitespace-nowrap ${
+                    isActive 
+                      ? 'bg-purple-600 text-white shadow-[0_3px_0_0_#4c1d95] scale-[1.02]' 
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {t(tab.labelKey)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Part Type Selector Carousel */}
+          <div className="bg-gray-800 border-2 border-black rounded-2xl p-4 mb-4 shadow-inner">
+            <div className="text-xs font-black uppercase tracking-wider text-purple-300 mb-2">
+              {t('creator.style')}
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <button 
+                type="button"
+                onClick={() => updatePart(activeTab, -1)}
+                className="w-10 h-10 rounded-xl bg-gray-700 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000]"
+              >
+                <FaChevronLeft size={16} />
+              </button>
+              
+              <div className="flex-1 text-center font-black text-lg text-yellow-400 truncate">
+                {currentSelectedOption?.labelKey ? t(currentSelectedOption.labelKey) : currentSelectedOption?.id}
+              </div>
+
+              <button 
+                type="button"
+                onClick={() => updatePart(activeTab, 1)}
+                className="w-10 h-10 rounded-xl bg-gray-700 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000]"
+              >
+                <FaChevronRight size={16} />
+              </button>
+            </div>
+
+            {/* Quick Chips Selection */}
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-700/60">
+              {currentOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setConfig(prev => ({ ...prev, [activeTab]: opt.id }))}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${
+                    config[activeTab] === opt.id
+                      ? 'bg-yellow-400 text-black shadow-[0_2px_0_0_#ca8a04]'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {t(opt.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Palette Picker (if applicable) */}
+          {activeTabConfig?.hasColor && (
+            <div className="bg-gray-800 border-2 border-black rounded-2xl p-4 shadow-inner">
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                  <FaPalette /> {t('creator.color')} ({t(activeTabConfig.labelKey)})
+                </div>
+                
+                {/* Custom Color Input */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-mono">
+                    {config[activeTabConfig.colorKey]}
+                  </span>
+                  <input
+                    type="color"
+                    value={config[activeTabConfig.colorKey] || '#ffffff'}
+                    onChange={(e) => updateColor(activeTabConfig.colorKey, e.target.value)}
+                    className="w-7 h-7 rounded-lg border-2 border-black cursor-pointer bg-transparent"
+                    title={t('creator.customColor')}
+                  />
+                </div>
+              </div>
+
+              {/* Color Swatches Grid */}
+              <div className="flex flex-wrap gap-2.5">
+                {(COLOR_PALETTES[activeTab] || []).map((colorHex) => {
+                  const isSelected = config[activeTabConfig.colorKey]?.toLowerCase() === colorHex.toLowerCase();
+                  return (
+                    <button
+                      key={colorHex}
+                      type="button"
+                      onClick={() => updateColor(activeTabConfig.colorKey, colorHex)}
+                      style={{ backgroundColor: colorHex }}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform ${
+                        isSelected 
+                          ? 'border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.8)] z-10' 
+                          : 'border-black hover:scale-110 opacity-90 hover:opacity-100'
+                      }`}
+                      title={colorHex}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
