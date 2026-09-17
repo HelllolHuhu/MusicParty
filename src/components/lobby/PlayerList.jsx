@@ -3,17 +3,24 @@ import { ref, update } from 'firebase/database';
 import AvatarViewer from './AvatarViewer';
 import { useLanguage } from '../../context/LanguageContext';
 
+import { useState } from 'react';
+
 export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
   const { t } = useLanguage();
+  const [confirmingKickId, setConfirmingKickId] = useState(null);
   const players = Object.entries(roomData?.players || {}).map(([id, p]) => ({ id, ...p }));
   const MAX_PLAYERS = 10;
 
   const handleKick = (targetId) => {
     if (!isHost) return;
-    if (confirm(t('playerList.kickConfirm'))) {
+    if (confirmingKickId === targetId) {
       const updates = {};
       updates[`rooms/${roomId}/players/${targetId}`] = null;
       update(ref(db), updates);
+      setConfirmingKickId(null);
+    } else {
+      setConfirmingKickId(targetId);
+      setTimeout(() => setConfirmingKickId(null), 4000);
     }
   };
 
@@ -70,9 +77,13 @@ export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
               {isHost && !isMe && (
                 <button 
                   onClick={() => handleKick(p.id)}
-                  className="btn-chunky btn-chunky-gray text-red-400 hover:text-red-200 px-3 py-1.5 rounded-xl font-black text-xs transition-colors shrink-0 ml-2"
+                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all shrink-0 ml-2 border-2 border-black ${
+                    confirmingKickId === p.id 
+                      ? 'bg-red-600 text-white shadow-[0_2px_0_0_#000] animate-pulse' 
+                      : 'btn-chunky btn-chunky-gray text-red-400 hover:text-red-200'
+                  }`}
                 >
-                  {t('playerList.kick')}
+                  {confirmingKickId === p.id ? 'CONFIRM?' : t('playerList.kick')}
                 </button>
               )}
             </div>

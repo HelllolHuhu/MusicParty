@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 import Lobby from './components/Lobby';
+import CountdownOverlay from './components/game/CountdownOverlay';
+import SongPreviewOverlay from './components/game/SongPreviewOverlay';
 import GamePhase from './components/GamePhase';
 import PresentationPhase from './components/PresentationPhase';
 import RoundResults from './components/RoundResults';
 import Navbar from './components/common/Navbar';
+import LobbyAmbientMusic from './components/common/LobbyAmbientMusic';
 
 function App() {
   const [playerId, setPlayerId] = useState(() => {
@@ -99,18 +102,16 @@ function App() {
   };
 
   const handleLeaveRoom = () => {
-    if (window.confirm("Leave current room?")) {
-      if (roomId && playerId && db) {
-        // Remove self from room players
-        const updates = {};
-        updates[`rooms/${roomId}/players/${playerId}`] = null;
-        update(ref(db), updates).catch(console.error);
-      }
-      localStorage.removeItem('currentRoomId');
-      setRoomId(null);
-      setRoomData(null);
-      window.history.replaceState({}, '', '/');
+    if (roomId && playerId && db) {
+      // Remove self from room players
+      const updates = {};
+      updates[`rooms/${roomId}/players/${playerId}`] = null;
+      update(ref(db), updates).catch(console.error);
     }
+    localStorage.removeItem('currentRoomId');
+    setRoomId(null);
+    setRoomData(null);
+    window.history.replaceState({}, '', '/');
   };
 
   const handleForcedLeave = () => {
@@ -121,9 +122,33 @@ function App() {
   };
 
   const currentRoomData = roomData || { status: 'lobby', players: {} };
+  const isHost = currentRoomData?.host === playerId;
+
+  const handleCountdownComplete = () => {
+    if (isHost && roomId) {
+      update(ref(db, `rooms/${roomId}`), {
+        status: 'song_preview',
+        songStartTime: Date.now()
+      }).catch(console.error);
+    }
+  };
+
+  const handleSongPreviewComplete = () => {
+    if (isHost && roomId) {
+      update(ref(db, `rooms/${roomId}`), {
+        status: 'playing',
+        startTime: Date.now()
+      }).catch(console.error);
+    }
+  };
+
+  const isLobbyActive = !roomId || currentRoomData.status === 'lobby';
 
   return (
     <div className="min-h-screen font-sans flex flex-col transition-colors duration-200">
+      {/* Background Ambient Music for Lobby & Waiting Room */}
+      <LobbyAmbientMusic isActive={isLobbyActive} />
+
       {/* Top Navbar with Theme Switcher, Logo, and Language Dropdown */}
       <Navbar onLogoClick={roomId ? handleLeaveRoom : undefined} />
 
@@ -154,6 +179,24 @@ function App() {
             onLeave={handleForcedLeave}
           />
         )}
+
+        {roomId && currentRoomData.status === 'countdown' && (
+          <CountdownOverlay 
+            countdownStartTime={currentRoomData.countdownStartTime || Date.now()}
+            song={currentRoomData.currentSong}
+            isHost={isHost}
+            onComplete={handleCountdownComplete}
+          />
+        )}
+
+        {roomId && currentRoomData.status === 'song_preview' && (
+          <SongPreviewOverlay 
+            song={currentRoomData.currentSong}
+            songStartTime={currentRoomData.songStartTime || Date.now()}
+            isHost={isHost}
+            onComplete={handleSongPreviewComplete}
+          />
+        )}
         
         {roomId && currentRoomData.status === 'playing' && (
           <GamePhase 
@@ -171,11 +214,12 @@ function App() {
           />
         )}
 
-        {roomId && currentRoomData.status === 'round_results' && (
+        {roomId && (currentRoomData.status === 'round_results' || currentRoomData.status === 'final_results') && (
           <RoundResults 
-            roomId={roomId}
-            roomData={currentRoomData}
+            roomId={roomId} 
+            roomData={currentRoomData} 
             playerId={playerId}
+            onLeave={handleForcedLeave}
           />
         )}
       </main>

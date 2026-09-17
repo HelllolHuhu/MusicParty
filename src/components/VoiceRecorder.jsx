@@ -9,8 +9,11 @@ export default function VoiceRecorder({ roomId, playerId, locked, savedVoice }) 
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
+  const [micError, setMicError] = useState(null);
+
   const startRecording = async () => {
     if (locked) return;
+    setMicError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -46,7 +49,8 @@ export default function VoiceRecorder({ roomId, playerId, locked, savedVoice }) 
 
     } catch (err) {
       console.error("Mic access denied", err);
-      alert("Nepodarilo sa získať prístup k mikrofónu.");
+      setMicError("Nepodarilo sa získať prístup k mikrofónu.");
+      setTimeout(() => setMicError(null), 4000);
     }
   };
 
@@ -64,8 +68,14 @@ export default function VoiceRecorder({ roomId, playerId, locked, savedVoice }) 
   };
 
   return (
-    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg flex flex-col h-full">
+    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg flex flex-col h-full relative">
       <h3 className="text-xl font-bold mb-6">Nahrávanie Hlasu</h3>
+
+      {micError && (
+        <div className="bg-red-500/20 border border-red-500 text-red-300 text-xs font-bold p-2.5 rounded-lg mb-4 text-center">
+          {micError}
+        </div>
+      )}
       
       <div className="flex-1 flex flex-col items-center justify-center gap-6">
         {!audioUrl ? (

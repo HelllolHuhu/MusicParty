@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../firebase';
 import { ref, update, get } from 'firebase/database';
 import CharacterCreator from './lobby/CharacterCreator';
@@ -6,6 +6,7 @@ import LobbySettings from './lobby/LobbySettings';
 import PlayerList from './lobby/PlayerList';
 import JoinCodeBox from './lobby/JoinCodeBox';
 import { useLanguage } from '../context/LanguageContext';
+import { fetchSongForGenre } from '../services/youtubeService';
 
 export default function Lobby({ onJoin, initialRoomId, initialName, initialAvatarConfig, playerId }) {
   const { t } = useLanguage();
@@ -177,6 +178,10 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
     }
   }, [roomId, playerId, playerName, avatarConfig, roomData]);
 
+  const [isConfirmingLeave, setIsConfirmingLeave] = useState(false);
+  const [lobbyError, setLobbyError] = useState(null);
+  const confirmTimerRef = useRef(null);
+
   // If host left or is missing, elect the first active player as host
   useEffect(() => {
     if (!roomData || !roomData.players || !roomId || !db) return;
@@ -191,21 +196,52 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
     }
   }, [roomData, roomId, playerId]);
 
-  // If player got kicked
+  // If room was disbanded by host
   useEffect(() => {
-    if (roomData?.players && !roomData.players[playerId] && roomData.host) {
-      alert(t('lobby.kickedAlert'));
+    if (roomData?.status === 'disbanded') {
       if (onLeave) onLeave();
       else window.location.href = "/";
     }
-  }, [roomData, playerId, t, onLeave]);
+  }, [roomData?.status, onLeave]);
 
   const isHost = roomData?.host === playerId;
   const playersCount = Object.keys(roomData?.players || {}).length;
 
-  const startGame = () => {
+  const handleLeaveOrDisband = () => {
+    if (!isConfirmingLeave) {
+      setIsConfirmingLeave(true);
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = setTimeout(() => {
+        setIsConfirmingLeave(false);
+      }, 4000);
+      return;
+    }
+
+    // Executed when confirmed
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setIsConfirmingLeave(false);
+
+    if (isHost) {
+      update(ref(db, `rooms/${roomId}`), { status: 'disbanded' })
+        .then(() => {
+          if (onLeave) onLeave();
+        })
+        .catch(console.error);
+    } else {
+      const updates = {};
+      updates[`rooms/${roomId}/players/${playerId}`] = null;
+      update(ref(db), updates)
+        .then(() => {
+          if (onLeave) onLeave();
+        })
+        .catch(console.error);
+    }
+  };
+
+  const startGame = async () => {
     if (playersCount < 2) {
-      alert(t('lobby.need2Players'));
+      setLobbyError(t('lobby.need2Players'));
+      setTimeout(() => setLobbyError(null), 4000);
       return;
     }
 
@@ -213,10 +249,15 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
     const randomStyle = styles[Math.floor(Math.random() * styles.length)];
     const timeMs = (roomData?.settings?.timeMinutes || 10) * 60 * 1000;
     
+    // Fetch a real YouTube song clip for the selected genre
+    const song = await fetchSongForGenre(randomStyle);
+
+    // Transition to 5-second countdown first!
     update(ref(db, `rooms/${roomId}`), {
-      status: 'playing',
-      currentStyle: randomStyle,
-      startTime: Date.now(),
+      status: 'countdown',
+      countdownStartTime: Date.now(),
+      currentSong: song,
+      currentStyle: song.genre || randomStyle,
       gameDurationMs: timeMs,
       tracks: null,
       votes: null
@@ -231,6 +272,31 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
         <div className="lg:col-span-1 flex flex-col gap-6 sm:gap-8">
           <JoinCodeBox roomId={roomId} />
           <LobbySettings roomId={roomId} roomData={roomData} isHost={isHost} />
+          
+          {/* Leave / Disband Party Button */}
+          <button
+            onClick={handleLeaveOrDisband}
+            className={`w-full py-3 sm:py-3.5 px-4 rounded-2xl font-black text-sm sm:text-base border-3 border-black shadow-[0_4px_0_0_#000] active:translate-y-1 active:shadow-[0_0px_0_0] transition-all flex items-center justify-center gap-2 ${
+              isConfirmingLeave
+                ? 'bg-amber-400 hover:bg-amber-300 text-black animate-pulse'
+                : isHost 
+                  ? 'bg-red-600 hover:bg-red-500 text-white' 
+                  : 'bg-black/40 hover:bg-red-600/70 text-white hover:text-white'
+            }`}
+          >
+            <span>{isConfirmingLeave ? '⚠️' : isHost ? '💥' : '🚪'}</span>
+            <span>
+              {isConfirmingLeave
+                ? (isHost ? t('lobby.confirmDisband') : t('lobby.confirmLeave'))
+                : (isHost ? t('lobby.disbandParty') : t('lobby.leaveParty'))}
+            </span>
+          </button>
+
+          {lobbyError && (
+            <div className="bg-red-500/20 border-2 border-red-500 text-red-300 text-xs sm:text-sm font-bold p-3 rounded-xl text-center animate-bounce">
+              {lobbyError}
+            </div>
+          )}
         </div>
 
         {/* Right Column */}
