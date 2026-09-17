@@ -26,3 +26,4 @@ dist-ssr
 # API keys and credentials
 src/firebase.js
 firebase.js
+.env
