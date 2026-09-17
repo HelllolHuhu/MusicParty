@@ -13,7 +13,7 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
   const { t, lang } = useLanguage();
   const [name, setName] = useState(initialName || '');
   const [config, setConfig] = useState(initialConfig || DEFAULT_AVATAR_CONFIG);
-  const [activeTab, setActiveTab] = useState('head'); // 'head' | 'hair' | 'eyes' | 'beard' | 'accessory'
+  const [activeTab, setActiveTab] = useState('head');
 
   // Push state upwards to parent
   useEffect(() => {
@@ -85,39 +85,40 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
   const activeTabConfig = tabs.find(t => t.key === activeTab);
 
   return (
-    <div className="chunky-panel p-6 flex flex-col md:flex-row gap-8 items-stretch">
-      {/* Left Column: Avatar Preview & Name */}
-      <div className="flex-1 flex flex-col items-center justify-center">
+    <div className="chunky-panel p-4 sm:p-6 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
+      {/* Left Column: Avatar Preview & Compact Name Input + Randomize Button below */}
+      <div className="md:w-60 lg:w-64 flex flex-col items-center justify-center shrink-0">
         <AvatarViewer 
           config={config} 
-          className="w-52 h-52 rounded-3xl mb-6 shadow-[0_8px_0_0_#000]" 
+          className="w-44 h-44 sm:w-48 sm:h-48 rounded-3xl mb-3.5 sm:mb-4 shadow-[0_6px_0_0_#000] border-4 border-black" 
         />
         
-        <div className="w-full flex gap-2">
+        <div className="w-full max-w-[210px] sm:max-w-[230px] flex flex-col items-center gap-2.5">
           <input
             type="text"
             placeholder={t('creator.enterName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="flex-1 bg-gray-800 border-3 border-gray-900 rounded-2xl p-3 px-4 font-bold text-lg text-white focus:outline-none focus:border-purple-500 shadow-inner"
+            className="w-full bg-black/40 border-3 border-black rounded-2xl py-2 px-3 font-bold text-sm sm:text-base text-center text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 shadow-inner"
             maxLength={15}
           />
           <button 
             type="button"
             onClick={randomizeAll}
-            className="btn-chunky btn-chunky-purple flex items-center justify-center w-14 rounded-2xl"
+            className="btn-chunky btn-chunky-purple w-full flex items-center justify-center gap-2 py-2 px-3 rounded-2xl text-xs sm:text-sm font-black tracking-wide"
             title={t('creator.randomTooltip')}
           >
-            <FaDice size={24} />
+            <FaDice size={18} />
+            <span>{t('creator.randomize')}</span>
           </button>
         </div>
       </div>
 
       {/* Right Column: Interactive Parts & Color Controls */}
-      <div className="flex-1 flex flex-col justify-between">
+      <div className="flex-1 w-full min-w-0 flex flex-col justify-between overflow-hidden">
         <div>
-          {/* Category Tabs */}
-          <div className="flex flex-wrap gap-1.5 mb-5 bg-gray-900/70 p-1.5 rounded-2xl border-2 border-black">
+          {/* Category Tabs (Single-line Horizontal Slider) */}
+          <div className="horizontal-slider gap-1.5 mb-4 bg-black/30 p-1.5 rounded-2xl border-2 border-black">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -125,10 +126,10 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 py-2 px-3 rounded-xl font-black text-sm transition-all text-center whitespace-nowrap ${
+                  className={`flex-shrink-0 py-2 px-3.5 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all text-center whitespace-nowrap cursor-pointer ${
                     isActive 
-                      ? 'bg-purple-600 text-white shadow-[0_3px_0_0_#4c1d95] scale-[1.02]' 
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      ? 'bg-purple-600 text-white shadow-[0_3px_0_0_#000] scale-[1.02]' 
+                      : 'text-white/80 hover:text-white hover:bg-black/20'
                   }`}
                 >
                   {t(tab.labelKey)}
@@ -137,44 +138,45 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
             })}
           </div>
 
-          {/* Part Type Selector Carousel */}
-          <div className="bg-gray-800 border-2 border-black rounded-2xl p-4 mb-4 shadow-inner">
-            <div className="text-xs font-black uppercase tracking-wider text-purple-300 mb-2">
+          {/* Part Type Selector Carousel & Style Chips (Single-line Horizontal Slider) */}
+          <div className="bg-black/25 border-2 border-black rounded-2xl p-3.5 sm:p-4 mb-3.5 shadow-inner">
+            <div className="text-xs font-black uppercase tracking-wider text-purple-200 mb-2">
               {t('creator.style')}
             </div>
-            <div className="flex items-center justify-between gap-4">
+            
+            <div className="flex items-center justify-between gap-3 sm:gap-4 mb-1">
               <button 
                 type="button"
                 onClick={() => updatePart(activeTab, -1)}
-                className="w-10 h-10 rounded-xl bg-gray-700 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000]"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black/40 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000] shrink-0"
               >
-                <FaChevronLeft size={16} />
+                <FaChevronLeft size={14} />
               </button>
               
-              <div className="flex-1 text-center font-black text-lg text-yellow-400 truncate">
+              <div className="flex-1 text-center font-black text-base sm:text-lg text-yellow-300 truncate px-2">
                 {currentSelectedOption?.labelKey ? t(currentSelectedOption.labelKey) : currentSelectedOption?.id}
               </div>
 
               <button 
                 type="button"
                 onClick={() => updatePart(activeTab, 1)}
-                className="w-10 h-10 rounded-xl bg-gray-700 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000]"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black/40 hover:bg-purple-600 hover:scale-110 flex items-center justify-center text-white font-bold transition-all border border-black shadow-[0_2px_0_0_#000] shrink-0"
               >
-                <FaChevronRight size={16} />
+                <FaChevronRight size={14} />
               </button>
             </div>
 
-            {/* Quick Chips Selection */}
-            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-700/60">
+            {/* Quick Chips Selection (Single-line Horizontal Slider) */}
+            <div className="horizontal-slider gap-2 mt-3 pt-3 border-t border-black/30 pb-1">
               {currentOptions.map((opt) => (
                 <button
                   key={opt.id}
                   type="button"
                   onClick={() => setConfig(prev => ({ ...prev, [activeTab]: opt.id }))}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold whitespace-nowrap transition-all cursor-pointer ${
                     config[activeTab] === opt.id
-                      ? 'bg-yellow-400 text-black shadow-[0_2px_0_0_#ca8a04]'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? 'bg-yellow-400 text-black shadow-[0_2px_0_0_#000]'
+                      : 'bg-black/40 text-white/90 hover:bg-black/60'
                   }`}
                 >
                   {t(opt.labelKey)}
@@ -183,17 +185,17 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
             </div>
           </div>
 
-          {/* Color Palette Picker (if applicable) */}
+          {/* Color Palette Picker (Single-line Horizontal Slider) */}
           {activeTabConfig?.hasColor && (
-            <div className="bg-gray-800 border-2 border-black rounded-2xl p-4 shadow-inner">
-              <div className="flex justify-between items-center mb-3">
-                <div className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+            <div className="bg-black/25 border-2 border-black rounded-2xl p-3.5 sm:p-4 shadow-inner">
+              <div className="flex justify-between items-center mb-2.5">
+                <div className="text-xs font-black uppercase tracking-wider text-purple-200 flex items-center gap-1.5">
                   <FaPalette /> {t('creator.color')} ({t(activeTabConfig.labelKey)})
                 </div>
                 
                 {/* Custom Color Input */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-mono">
+                  <span className="text-xs text-white/90 font-mono font-bold">
                     {config[activeTabConfig.colorKey]}
                   </span>
                   <input
@@ -206,8 +208,8 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
                 </div>
               </div>
 
-              {/* Color Swatches Grid */}
-              <div className="flex flex-wrap gap-2.5">
+              {/* Color Swatches (Single-line Horizontal Slider) */}
+              <div className="horizontal-slider gap-2.5 py-1 px-1">
                 {(COLOR_PALETTES[activeTab] || []).map((colorHex) => {
                   const isSelected = config[activeTabConfig.colorKey]?.toLowerCase() === colorHex.toLowerCase();
                   return (
@@ -216,9 +218,9 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
                       type="button"
                       onClick={() => updateColor(activeTabConfig.colorKey, colorHex)}
                       style={{ backgroundColor: colorHex }}
-                      className={`w-8 h-8 rounded-full border-2 transition-transform ${
+                      className={`flex-shrink-0 w-8 h-8 rounded-full border-2 transition-transform cursor-pointer ${
                         isSelected 
-                          ? 'border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.8)] z-10' 
+                          ? 'border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.9)] z-10' 
                           : 'border-black hover:scale-110 opacity-90 hover:opacity-100'
                       }`}
                       title={colorHex}

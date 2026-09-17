@@ -32,7 +32,7 @@ export const HeadParts = {
       <path d="M52 100 C52 60 70 48 100 48 C130 48 148 60 148 100 L148 128 L126 160 L74 160 L52 128 Z" fill={color} stroke="#1f2937" strokeWidth="4" strokeLinejoin="round" />
       {/* Nose & Mouth */}
       <path d="M95 116 L100 122 L105 116" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <path d="M90 140 L110 140" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M90 140 L110 140" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" fill="none" />
     </g>
   ),
   head_3: ({ color = '#f9c9b6' }) => (
@@ -57,8 +57,8 @@ export const EyesParts = {
   eyes_1: ({ color = '#3b82f6' }) => (
     <g id="eyes_1">
       {/* Eyebrows */}
-      <path d="M66 84 C72 80 82 81 88 85" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
-      <path d="M134 84 C128 80 118 81 112 85" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
+      <path d="M66 84 C72 80 82 81 88 85" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d="M134 84 C128 80 118 81 112 85" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" fill="none" />
       {/* Left Eye */}
       <ellipse cx="76" cy="98" rx="13" ry="11" fill="#ffffff" stroke="#1f2937" strokeWidth="3" />
       <circle cx="76" cy="98" r="7.5" fill={color} />
@@ -74,41 +74,41 @@ export const EyesParts = {
   eyes_2: ({ color = '#3b82f6' }) => (
     <g id="eyes_2">
       {/* Eyebrows */}
-      <path d="M64 83 Q76 80 88 86" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M136 81 Q124 77 112 83" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M64 83 Q76 80 88 86" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+      <path d="M136 81 Q124 77 112 83" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
       {/* Left Eye */}
       <path d="M64 99 C64 92 88 92 88 99 C88 107 64 107 64 99 Z" fill="#ffffff" stroke="#1f2937" strokeWidth="3" />
       <ellipse cx="76" cy="99" rx="6.5" ry="5.5" fill={color} />
       <circle cx="76" cy="99" r="3" fill="#111827" />
       <circle cx="74.5" cy="97.5" r="1.5" fill="#ffffff" />
-      <path d="M62 97 Q76 93 90 98" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
+      <path d="M62 97 Q76 93 90 98" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" fill="none" />
       {/* Right Eye */}
       <path d="M112 99 C112 92 136 92 136 99 C136 107 112 107 112 99 Z" fill="#ffffff" stroke="#1f2937" strokeWidth="3" />
       <ellipse cx="124" cy="99" rx="6.5" ry="5.5" fill={color} />
       <circle cx="124" cy="99" r="3" fill="#111827" />
       <circle cx="122.5" cy="97.5" r="1.5" fill="#ffffff" />
-      <path d="M110 98 Q124 93 138 97" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
+      <path d="M110 98 Q124 93 138 97" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" fill="none" />
     </g>
   ),
   eyes_3: ({ color = '#3b82f6' }) => (
     <g id="eyes_3">
       {/* Cute Eyebrows */}
-      <path d="M68 82 Q78 78 88 83" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M132 82 Q122 78 112 83" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M68 82 Q78 78 88 83" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <path d="M132 82 Q122 78 112 83" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" fill="none" />
       {/* Left Eye */}
       <ellipse cx="76" cy="100" rx="14" ry="14" fill="#ffffff" stroke="#1f2937" strokeWidth="3.5" />
       <ellipse cx="76" cy="101" rx="10" ry="11" fill={color} />
       <ellipse cx="76" cy="103" rx="6.5" ry="7" fill="#111827" />
       <circle cx="73" cy="96" r="3.8" fill="#ffffff" />
       <circle cx="79" cy="104" r="2" fill="#ffffff" />
-      <path d="M62 96 Q76 88 90 96" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M62 96 Q76 88 90 96" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
       {/* Right Eye */}
       <ellipse cx="124" cy="100" rx="14" ry="14" fill="#ffffff" stroke="#1f2937" strokeWidth="3.5" />
       <ellipse cx="124" cy="101" rx="10" ry="11" fill={color} />
       <ellipse cx="124" cy="103" rx="6.5" ry="7" fill="#111827" />
       <circle cx="121" cy="96" r="3.8" fill="#ffffff" />
       <circle cx="127" cy="104" r="2" fill="#ffffff" />
-      <path d="M110 96 Q124 88 138 96" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M110 96 Q124 88 138 96" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
     </g>
   )
 };
@@ -140,8 +140,8 @@ export const HairParts = {
   hair_1: ({ color = '#18181b' }) => (
     <g id="hair_1">
       <path d="M48 95 C46 70 54 48 70 38 C80 32 92 28 108 30 C125 32 142 42 152 60 C156 68 155 85 152 95 C146 80 136 72 120 72 C105 72 98 80 88 78 C78 76 68 84 48 95 Z" fill={color} stroke="#1f2937" strokeWidth="4" strokeLinejoin="round" />
-      <path d="M78 45 C86 52 92 65 92 72" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
-      <path d="M106 38 C116 46 122 58 124 68" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
+      <path d="M78 45 C86 52 92 65 92 72" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.3" />
+      <path d="M106 38 C116 46 122 58 124 68" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.3" />
     </g>
   ),
   hair_2: ({ color = '#18181b' }) => (
@@ -157,9 +157,9 @@ export const HairParts = {
   ),
   hair_3: ({ color = '#18181b' }) => (
     <g id="hair_3">
-      <path d="M52 75 L62 82 M52 83 L62 90 M148 75 L138 82 M148 83 L138 90" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
+      <path d="M52 75 L62 82 M52 83 L62 90 M148 75 L138 82 M148 83 L138 90" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.4" />
       <path d="M84 72 L86 24 L98 42 L106 18 L114 44 L122 28 L122 72 C114 68 94 68 84 72 Z" fill={color} stroke="#1f2937" strokeWidth="4" strokeLinejoin="round" />
-      <path d="M104 26 L108 44 L114 65" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.35" />
+      <path d="M104 26 L108 44 L114 65" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.35" />
     </g>
   )
 };
@@ -168,18 +168,18 @@ export const HairParts = {
 export const AccessoryParts = {
   acc_1: () => (
     <g id="acc_1">
-      <path d="M92 97 L108 97" stroke="#111827" strokeWidth="5" strokeLinecap="round" />
-      <path d="M48 96 L60 97 M152 96 L140 97" stroke="#111827" strokeWidth="4" strokeLinecap="round" />
+      <path d="M92 97 L108 97" stroke="#111827" strokeWidth="5" strokeLinecap="round" fill="none" />
+      <path d="M48 96 L60 97 M152 96 L140 97" stroke="#111827" strokeWidth="4" strokeLinecap="round" fill="none" />
       <rect x="58" y="88" width="34" height="24" rx="6" fill="#1e293b" stroke="#0f172a" strokeWidth="4" />
-      <path d="M64 92 L82 92 M64 96 L74 96" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+      <path d="M64 92 L82 92 M64 96 L74 96" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
       <rect x="108" y="88" width="34" height="24" rx="6" fill="#1e293b" stroke="#0f172a" strokeWidth="4" />
-      <path d="M114 92 L132 92 M114 96 L124 96" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+      <path d="M114 92 L132 92 M114 96 L124 96" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
     </g>
   ),
   acc_2: () => (
     <g id="acc_2">
-      <path d="M38 105 C38 48 64 30 100 30 C136 30 162 48 162 105" stroke="#374151" strokeWidth="12" strokeLinecap="round" />
-      <path d="M44 100 C44 54 68 38 100 38 C132 38 156 54 156 100" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" />
+      <path d="M38 105 C38 48 64 30 100 30 C136 30 162 48 162 105" stroke="#374151" strokeWidth="12" strokeLinecap="round" fill="none" />
+      <path d="M44 100 C44 54 68 38 100 38 C132 38 156 54 156 100" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" fill="none" />
       <rect x="28" y="96" width="18" height="34" rx="8" fill="#1f2937" stroke="#111827" strokeWidth="3" />
       <rect x="32" y="102" width="10" height="22" rx="4" fill="#f59e0b" />
       <rect x="154" y="96" width="18" height="34" rx="8" fill="#1f2937" stroke="#111827" strokeWidth="3" />
@@ -192,8 +192,8 @@ export const AccessoryParts = {
       <circle cx="43" cy="122" r="1.5" fill="#ffffff" />
       <circle cx="157" cy="122" r="3.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
       <circle cx="157" cy="122" r="1.5" fill="#ffffff" />
-      <path d="M72 165 C80 188 120 188 128 165" stroke="#eab308" strokeWidth="6" strokeLinecap="round" />
-      <path d="M72 165 C80 188 120 188 128 165" stroke="#fde047" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" />
+      <path d="M72 165 C80 188 120 188 128 165" stroke="#eab308" strokeWidth="6" strokeLinecap="round" fill="none" />
+      <path d="M72 165 C80 188 120 188 128 165" stroke="#fde047" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" fill="none" />
       <path d="M100 180 L103 188 L111 189 L105 194 L107 201 L100 197 L93 201 L95 194 L89 189 L97 188 Z" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
     </g>
   )

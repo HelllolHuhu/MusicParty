@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { HeadParts, EyesParts, BeardParts, HairParts, AccessoryParts } from './AvatarPartsSvg';
 import { DEFAULT_AVATAR_CONFIG } from './avatarData';
 
-export default function AvatarViewer({ config, className = "" }) {
+export default function AvatarViewer({ config, className = "", showBackground = true }) {
   const mergedConfig = useMemo(() => {
     return {
       ...DEFAULT_AVATAR_CONFIG,
@@ -17,9 +17,10 @@ export default function AvatarViewer({ config, className = "" }) {
   const AccessoryComponent = mergedConfig.accessory && mergedConfig.accessory !== 'none' ? AccessoryParts[mergedConfig.accessory] : null;
 
   return (
-    <div className={`relative overflow-hidden flex items-center justify-center bg-gradient-to-b from-indigo-950/80 via-purple-950/80 to-zinc-900 border-4 border-black shadow-[4px_4px_0_0_#000] select-none ${className}`}>
+    <div className={`relative overflow-hidden flex items-center justify-center select-none ${showBackground ? 'bg-gradient-to-b from-indigo-950/80 via-purple-950/80 to-zinc-900' : ''} ${className}`}>
       <svg 
         viewBox="0 0 200 200" 
+        fill="none"
         className="w-full h-full object-contain pointer-events-none drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
       >
         {/* Layer 1: Head shape & skin */}

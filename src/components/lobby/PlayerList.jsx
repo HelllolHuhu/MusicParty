@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
   const { t } = useLanguage();
   const players = Object.entries(roomData?.players || {}).map(([id, p]) => ({ id, ...p }));
-  const maxPlayers = roomData?.settings?.maxPlayers || 10;
+  const MAX_PLAYERS = 10;
 
   const handleKick = (targetId) => {
     if (!isHost) return;
@@ -18,50 +18,72 @@ export default function PlayerList({ roomId, roomData, isHost, myPlayerId }) {
   };
 
   return (
-    <div className="chunky-panel p-6 h-full flex flex-col">
-      <h3 className="text-xl font-bold text-green-400 mb-4 flex justify-between items-end">
+    <div className="chunky-panel p-5 sm:p-6 h-full flex flex-col">
+      <h3 className="text-xl sm:text-2xl font-black mb-4 flex justify-between items-center">
         <span>{t('playerList.players')}</span>
-        <span className="text-sm text-gray-500">{players.length} / {maxPlayers}</span>
+        <span className="text-sm sm:text-base opacity-80 font-mono font-black bg-black/30 px-3 py-1 rounded-xl border border-black/40">
+          {players.length} / {MAX_PLAYERS}
+        </span>
       </h3>
       
-      <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-        {players.map(p => (
-          <div key={p.id} className={`flex items-center justify-between p-3 rounded-2xl border-2 ${p.id === myPlayerId ? 'bg-zinc-800 border-green-500 shadow-[0_4px_0_0_#22c55e]' : 'bg-zinc-900 border-black shadow-[0_4px_0_0_#000]'}`}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-zinc-800 border-2 border-black flex items-center justify-center overflow-hidden relative">
-                {p.avatarConfig ? (
-                  <AvatarViewer config={p.avatarConfig} className="w-full h-full" />
-                ) : (
-                  <span className="font-bold text-gray-500">{p.name?.charAt(0)?.toUpperCase()}</span>
-                )}
-              </div>
-              <div>
-                <div className="font-bold text-white text-lg">
-                  {p.name} 
-                  {p.id === roomData.host && <span className="ml-2 text-yellow-400 text-sm" title={t('playerList.host')}>👑</span>}
-                </div>
-                {p.id === myPlayerId && <div className="text-xs text-green-400 font-bold uppercase tracking-wider">{t('playerList.you')}</div>}
-              </div>
-            </div>
-            
-            {isHost && p.id !== myPlayerId && (
-              <button 
-                onClick={() => handleKick(p.id)}
-                className="text-red-500 hover:text-red-400 hover:bg-red-500/20 p-2 rounded-lg font-bold text-sm transition-colors"
-              >
-                {t('playerList.kick')}
-              </button>
-            )}
-          </div>
-        ))}
+      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 space-y-3">
+        {players.map(p => {
+          const isCurrentPlayerHost = p.id === roomData?.host;
+          const isMe = p.id === myPlayerId;
 
-        {/* Empty slots placeholders */}
-        {Array.from({ length: Math.max(0, maxPlayers - players.length) }).map((_, i) => (
-          <div key={`empty-${i}`} className="flex items-center gap-4 p-3 rounded-2xl border-2 border-dashed border-gray-700 opacity-50">
-            <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center"></div>
-            <div className="font-bold text-gray-600">{t('playerList.emptySlot')}</div>
+          return (
+            <div 
+              key={p.id} 
+              className={`flex items-center justify-between p-3 sm:p-4 rounded-2xl border-3 border-black transition-all ${
+                isMe 
+                  ? 'bg-black/40 shadow-[4px_4px_0_0_#000]' 
+                  : 'bg-black/20 shadow-[2px_2px_0_0_#000]'
+              }`}
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4.5 min-w-0">
+                {/* Big Character Icon */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-3 border-black shadow-[2px_2px_0_0_#000] overflow-hidden shrink-0 flex items-center justify-center bg-black/40">
+                  {p.avatarConfig ? (
+                    <AvatarViewer config={p.avatarConfig} className="w-full h-full" />
+                  ) : (
+                    <span className="font-black text-white text-2xl sm:text-3xl">{p.name?.charAt(0)?.toUpperCase()}</span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="font-black text-white text-lg sm:text-xl flex items-center gap-2 truncate">
+                    <span className="truncate">{p.name}</span>
+                    {isCurrentPlayerHost && (
+                      <span className="inline-flex items-center gap-1 bg-yellow-400 text-black text-xs font-black px-2 py-0.5 rounded-lg border border-black shrink-0 shadow-sm" title={t('playerList.host')}>
+                        👑 {t('playerList.host')}
+                      </span>
+                    )}
+                  </div>
+                  {isMe && (
+                    <div className="mt-0.5 text-xs font-black text-yellow-300 uppercase tracking-wider">
+                      ✨ {t('playerList.you')}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {isHost && !isMe && (
+                <button 
+                  onClick={() => handleKick(p.id)}
+                  className="btn-chunky btn-chunky-gray text-red-400 hover:text-red-200 px-3 py-1.5 rounded-xl font-black text-xs transition-colors shrink-0 ml-2"
+                >
+                  {t('playerList.kick')}
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {players.length < 2 && (
+          <div className="p-4 rounded-2xl border-2 border-dashed border-black/30 text-center font-bold text-xs sm:text-sm opacity-60">
+            {t('lobby.waitingPlayers')} ({players.length}/{MAX_PLAYERS})
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

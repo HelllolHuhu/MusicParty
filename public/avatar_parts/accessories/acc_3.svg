@@ -6,8 +6,8 @@
   <circle cx="157" cy="122" r="3.5" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
   <circle cx="157" cy="122" r="1.5" fill="#ffffff" />
   <!-- Chunky Gold Chain around Neck -->
-  <path d="M72 165 C80 188 120 188 128 165" stroke="#eab308" stroke-width="6" stroke-linecap="round" />
-  <path d="M72 165 C80 188 120 188 128 165" stroke="#fde047" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" />
+  <path d="M72 165 C80 188 120 188 128 165" stroke="#eab308" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M72 165 C80 188 120 188 128 165" stroke="#fde047" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" fill="none" />
   <!-- Music Note / Star Pendant -->
   <path d="M100 180 L103 188 L111 189 L105 194 L107 201 L100 197 L93 201 L95 194 L89 189 L97 188 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5" />
 </svg>

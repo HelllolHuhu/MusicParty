@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
   <path d="M48 95 C46 70 54 48 70 38 C80 32 92 28 108 30 C125 32 142 42 152 60 C156 68 155 85 152 95 C146 80 136 72 120 72 C105 72 98 80 88 78 C78 76 68 84 48 95 Z" fill="currentColor" stroke="#1f2937" stroke-width="4" stroke-linejoin="round" />
   <!-- Hair Strands Detail -->
-  <path d="M78 45 C86 52 92 65 92 72" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3" />
-  <path d="M106 38 C116 46 122 58 124 68" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3" />
+  <path d="M78 45 C86 52 92 65 92 72" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.3" />
+  <path d="M106 38 C116 46 122 58 124 68" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.3" />
 </svg>

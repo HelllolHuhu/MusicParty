@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
 export const LANGUAGES = [
   { code: 'en', label: 'EN', flag: '🇬🇧', name: 'English' },
@@ -12,6 +12,7 @@ export const TRANSLATIONS = {
     // Character Creator
     "creator.title": "Character Appearance",
     "creator.enterName": "Enter name...",
+    "creator.randomize": "Randomize",
     "creator.randomTooltip": "Random avatar and name",
     "creator.style": "Type / Style:",
     "creator.color": "Color",
@@ -104,11 +105,20 @@ export const TRANSLATIONS = {
     "results.nextRound": "Next Round",
     "results.endGame": "End Game",
     "results.backToMenu": "Back to Menu",
+
+    // Theme & Navbar
+    "navbar.logo": "Music Party",
+    "theme.label": "Theme",
+    "theme.mantis": "Mantis",
+    "theme.asphalt": "Asphalt",
+    "theme.rose": "Rose",
+    "lang.label": "Language",
   },
   sk: {
     // Character Creator
     "creator.title": "Vzhľad Postavy",
     "creator.enterName": "Zadaj meno...",
+    "creator.randomize": "Náhodne",
     "creator.randomTooltip": "Náhodný avatar a meno",
     "creator.style": "Typ / Štýl:",
     "creator.color": "Farba",
@@ -201,11 +211,20 @@ export const TRANSLATIONS = {
     "results.nextRound": "Ďalšie Kolo",
     "results.endGame": "Ukončiť hru",
     "results.backToMenu": "Späť do menu",
+
+    // Theme & Navbar
+    "navbar.logo": "Music Party",
+    "theme.label": "Téma",
+    "theme.mantis": "Mantis",
+    "theme.asphalt": "Asfalt",
+    "theme.rose": "Ružová",
+    "lang.label": "Jazyk",
   },
   es: {
     // Character Creator
     "creator.title": "Aspecto del Personaje",
     "creator.enterName": "Ingresa nombre...",
+    "creator.randomize": "Aleatorio",
     "creator.randomTooltip": "Avatar y nombre aleatorio",
     "creator.style": "Tipo / Estilo:",
     "creator.color": "Color",
@@ -298,11 +317,20 @@ export const TRANSLATIONS = {
     "results.nextRound": "Siguiente Ronda",
     "results.endGame": "Terminar Juego",
     "results.backToMenu": "Volver al Menú",
+
+    // Theme & Navbar
+    "navbar.logo": "Music Party",
+    "theme.label": "Tema",
+    "theme.mantis": "Mantis",
+    "theme.asphalt": "Asfalto",
+    "theme.rose": "Rosa",
+    "lang.label": "Idioma",
   },
   de: {
     // Character Creator
     "creator.title": "Charakter-Aussehen",
     "creator.enterName": "Name eingeben...",
+    "creator.randomize": "Zufällig",
     "creator.randomTooltip": "Zufälliger Avatar & Name",
     "creator.style": "Typ / Stil:",
     "creator.color": "Farbe",
@@ -395,6 +423,14 @@ export const TRANSLATIONS = {
     "results.nextRound": "Nächste Runde",
     "results.endGame": "Spiel Beenden",
     "results.backToMenu": "Hauptmenü",
+
+    // Theme & Navbar
+    "navbar.logo": "Music Party",
+    "theme.label": "Design",
+    "theme.mantis": "Mantis",
+    "theme.asphalt": "Asphalt",
+    "theme.rose": "Rose",
+    "lang.label": "Sprache",
   }
 };
 

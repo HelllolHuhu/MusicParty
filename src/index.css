@@ -4,34 +4,95 @@
   --font-sans: 'Fredoka', sans-serif;
 }
 
+/* =========================================================
+   Gartic Phone-style anti-drag and anti-selection rules
+   ========================================================= */
+*, *::before, *::after {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Allow typing and selecting inside text inputs and textareas */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+img, svg {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+}
+
+/* CSS Theme Variables Defaults (Mantis default) */
+:root {
+  --theme-bg: #0F0A0A;
+  --theme-panel: #82D173;
+  --theme-panel-text: #0F0A0A;
+  --theme-text: #FFFFFF;
+  --theme-accent: #82D173;
+}
+
 @layer utilities {
   .btn-chunky {
-    @apply relative overflow-hidden font-bold transition-all duration-200 active:translate-y-1 active:shadow-[0_0px_0_0] select-none;
+    @apply relative overflow-hidden font-bold transition-all duration-200 active:translate-y-1 active:shadow-[0_0px_0_0] select-none cursor-pointer;
   }
   
   .btn-chunky-purple {
-    @apply bg-purple-600 hover:bg-purple-500 text-white border-2 border-purple-900 shadow-[0_6px_0_0_#3b0764,0_0_15px_rgba(168,85,247,0.4)] rounded-2xl px-6 py-3;
+    @apply bg-purple-600 hover:bg-purple-500 text-white border-2 border-black shadow-[0_5px_0_0_#000000] rounded-2xl px-6 py-3;
   }
 
   .btn-chunky-green {
-    @apply bg-emerald-500 hover:bg-emerald-400 text-white border-2 border-emerald-900 shadow-[0_6px_0_0_#064e3b,0_0_15px_rgba(16,185,129,0.4)] rounded-2xl px-6 py-3;
+    @apply bg-emerald-500 hover:bg-emerald-400 text-white border-2 border-black shadow-[0_5px_0_0_#000000] rounded-2xl px-6 py-3;
   }
 
   .btn-chunky-pink {
-    @apply bg-pink-600 hover:bg-pink-500 text-white border-2 border-pink-900 shadow-[0_6px_0_0_#831843,0_0_15px_rgba(236,72,153,0.4)] rounded-2xl px-6 py-3;
+    @apply bg-pink-600 hover:bg-pink-500 text-white border-2 border-black shadow-[0_5px_0_0_#000000] rounded-2xl px-6 py-3;
   }
 
   .btn-chunky-gray {
-    @apply bg-zinc-700 hover:bg-zinc-600 text-white border-2 border-zinc-900 shadow-[0_6px_0_0_#18181b] rounded-2xl px-6 py-3;
+    @apply bg-zinc-800 hover:bg-zinc-700 text-white border-2 border-black shadow-[0_5px_0_0_#000000] rounded-2xl px-6 py-3;
   }
   
   .chunky-panel {
-    @apply bg-zinc-900 border-4 border-black shadow-[8px_8px_0_0_#000000] rounded-3xl relative;
+    background-color: var(--theme-panel, #82D173);
+    color: var(--theme-panel-text, #0F0A0A);
+    @apply border-4 border-black shadow-[6px_6px_0_0_#000000] md:shadow-[8px_8px_0_0_#000000] rounded-3xl relative transition-colors duration-200;
+  }
+
+  .chunky-subpanel {
+    @apply bg-black/15 border-2 border-black/80 rounded-2xl shadow-inner transition-colors;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .horizontal-slider {
+    @apply flex flex-nowrap items-center overflow-x-auto scroll-smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .horizontal-slider::-webkit-scrollbar {
+    display: none;
   }
 }
 
 body {
   font-family: 'Fredoka', sans-serif;
-  background-color: #09090b; /* Tailwind zinc-950 */
-  color: #f4f4f5; /* Tailwind zinc-100 */
+  background-color: var(--theme-bg, #0F0A0A);
+  color: var(--theme-text, #FFFFFF);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }

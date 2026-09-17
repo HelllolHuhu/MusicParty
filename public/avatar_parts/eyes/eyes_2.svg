@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
   <!-- Eyebrows -->
-  <path d="M64 83 Q76 80 88 86" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" />
-  <path d="M136 81 Q124 77 112 83" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M64 83 Q76 80 88 86" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" fill="none" />
+  <path d="M136 81 Q124 77 112 83" stroke="#1f2937" stroke-width="4.5" stroke-linecap="round" fill="none" />
   
   <!-- Left Eye -->
   <path d="M64 99 C64 92 88 92 88 99 C88 107 64 107 64 99 Z" fill="#ffffff" stroke="#1f2937" stroke-width="3" />
@@ -10,7 +10,7 @@
   <circle cx="76" cy="99" r="3" fill="#111827" />
   <circle cx="74.5" cy="97.5" r="1.5" fill="#ffffff" />
   <!-- Upper Eyelid / Lash Line -->
-  <path d="M62 97 Q76 93 90 98" stroke="#1f2937" stroke-width="4" stroke-linecap="round" />
+  <path d="M62 97 Q76 93 90 98" stroke="#1f2937" stroke-width="4" stroke-linecap="round" fill="none" />
   
   <!-- Right Eye -->
   <path d="M112 99 C112 92 136 92 136 99 C136 107 112 107 112 99 Z" fill="#ffffff" stroke="#1f2937" stroke-width="3" />
@@ -19,5 +19,5 @@
   <circle cx="124" cy="99" r="3" fill="#111827" />
   <circle cx="122.5" cy="97.5" r="1.5" fill="#ffffff" />
   <!-- Upper Eyelid / Lash Line -->
-  <path d="M110 98 Q124 93 138 97" stroke="#1f2937" stroke-width="4" stroke-linecap="round" />
+  <path d="M110 98 Q124 93 138 97" stroke="#1f2937" stroke-width="4" stroke-linecap="round" fill="none" />
 </svg>
