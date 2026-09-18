@@ -1,6 +1,6 @@
 // YouTube Music Service with YouTube Data API v3 & Curated World Hits
 
-const API_KEY = import.meta.env.YOUTUBE_API_KEY || import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyAkxaX_H4EH35Sl_YmgujXFmfnLvBMkMB8';
+const API_KEY = import.meta.env.YOUTUBE_API_KEY || import.meta.env.VITE_YOUTUBE_API_KEY;
 
 // Top-tier world-famous iconic mega-hits with guaranteed hook / chorus timestamps
 export const CURATED_SONGS = {

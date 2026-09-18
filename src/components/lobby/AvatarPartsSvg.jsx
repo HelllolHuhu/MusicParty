@@ -110,6 +110,45 @@ export const EyesParts = {
       <circle cx="127" cy="104" r="2" fill="#ffffff" />
       <path d="M110 96 Q124 88 138 96" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
     </g>
+  ),
+  eyes_4: ({ color = '#ef4444' }) => (
+    <g id="eyes_4">
+      {/* Twitchy, wild, unhinged eyebrows */}
+      <path d="M62 76 Q76 86 90 76" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+      <path d="M138 76 Q124 86 110 76" stroke="#1f2937" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+      
+      {/* Forehead stress wrinkles */}
+      <path d="M78 70 Q100 66 122 70" stroke="#1f2937" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4" />
+      <path d="M84 64 Q100 61 116 64" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.3" />
+
+      {/* Left Eye - Wide Bloodshot Red Sclera */}
+      <ellipse cx="76" cy="97" rx="14" ry="13" fill="#ffe4e6" stroke="#1f2937" strokeWidth="3.5" />
+      {/* Squiggly Red Bloodshot Veins */}
+      <path d="M63 93 Q69 95 71 91 M64 102 Q70 99 72 104 M89 92 Q83 95 81 91 M88 103 Q82 100 80 105" stroke="#ef4444" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <path d="M66 97 L71 96 M86 97 L81 96" stroke="#dc2626" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* Iris */}
+      <ellipse cx="76" cy="97" rx="6" ry="6" fill={color} />
+      {/* Pinpoint twitching pupil */}
+      <circle cx="76" cy="97" r="2.4" fill="#111827" />
+      <circle cx="74.5" cy="95.5" r="1" fill="#ffffff" />
+      {/* Heavy Reddish-Purple Bags Underneath */}
+      <path d="M62 108 C68 116 84 116 90 108" stroke="#991b1b" strokeWidth="2.8" strokeLinecap="round" fill="none" opacity="0.8" />
+      <path d="M65 112 C71 118 81 118 87 112" stroke="#581c87" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.5" />
+
+      {/* Right Eye - Wild & Jittery */}
+      <ellipse cx="124" cy="97" rx="14" ry="13" fill="#ffe4e6" stroke="#1f2937" strokeWidth="3.5" />
+      {/* Squiggly Red Bloodshot Veins */}
+      <path d="M111 93 Q117 95 119 91 M112 102 Q118 99 120 104 M137 92 Q131 95 129 91 M136 103 Q130 100 128 105" stroke="#ef4444" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <path d="M114 97 L119 96 M134 97 L129 96" stroke="#dc2626" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* Iris */}
+      <ellipse cx="124" cy="97" rx="6" ry="6" fill={color} />
+      {/* Pinpoint twitching pupil */}
+      <circle cx="124" cy="97" r="2.4" fill="#111827" />
+      <circle cx="122.5" cy="95.5" r="1" fill="#ffffff" />
+      {/* Heavy Reddish-Purple Bags Underneath */}
+      <path d="M110 108 C116 116 132 116 138 108" stroke="#991b1b" strokeWidth="2.8" strokeLinecap="round" fill="none" opacity="0.8" />
+      <path d="M113 112 C119 118 129 118 135 112" stroke="#581c87" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.5" />
+    </g>
   )
 };
 
@@ -161,6 +200,29 @@ export const HairParts = {
       <path d="M84 72 L86 24 L98 42 L106 18 L114 44 L122 28 L122 72 C114 68 94 68 84 72 Z" fill={color} stroke="#1f2937" strokeWidth="4" strokeLinejoin="round" />
       <path d="M104 26 L108 44 L114 65" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.35" />
     </g>
+  ),
+  hair_4: ({ color = '#18181b' }) => (
+    <g id="hair_4">
+      {/* Durag Cap Dome */}
+      <path d="M48 96 C46 54 68 38 100 38 C132 38 154 54 152 96 C142 82 126 78 100 78 C74 78 58 82 48 96 Z" fill={color} stroke="#1f2937" strokeWidth="4" strokeLinejoin="round" />
+      
+      {/* Back flap / cape draping down side */}
+      <path d="M146 94 C156 108 166 138 162 176 C154 178 146 172 142 158 C146 135 144 112 140 96 Z" fill={color} stroke="#1f2937" strokeWidth="3.5" strokeLinejoin="round" />
+      <path d="M142 96 C148 112 152 138 148 160 C143 162 138 155 137 146 C140 128 139 110 137 98 Z" fill="#000000" opacity="0.25" />
+
+      {/* Forehead Band */}
+      <path d="M46 90 C68 80 132 80 154 90 L154 98 C132 88 68 88 46 98 Z" fill={color} stroke="#1f2937" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M46 94 C68 85 132 85 154 94" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35" />
+
+      {/* Center Seam */}
+      <path d="M100 38 L100 78" stroke="#ffffff" strokeWidth="2" opacity="0.3" strokeLinecap="round" />
+      
+      {/* Silky Shine Highlight */}
+      <path d="M68 52 C80 45 120 45 132 52" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.3" />
+      
+      {/* Knot on right temple */}
+      <ellipse cx="146" cy="94" rx="5" ry="4" fill={color} stroke="#1f2937" strokeWidth="2.5" />
+    </g>
   )
 };
 
@@ -187,14 +249,52 @@ export const AccessoryParts = {
     </g>
   ),
   acc_3: () => (
+    // Gold Chain (Without earrings)
     <g id="acc_3">
-      <circle cx="43" cy="122" r="3.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
-      <circle cx="43" cy="122" r="1.5" fill="#ffffff" />
-      <circle cx="157" cy="122" r="3.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
-      <circle cx="157" cy="122" r="1.5" fill="#ffffff" />
       <path d="M72 165 C80 188 120 188 128 165" stroke="#eab308" strokeWidth="6" strokeLinecap="round" fill="none" />
       <path d="M72 165 C80 188 120 188 128 165" stroke="#fde047" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" fill="none" />
       <path d="M100 180 L103 188 L111 189 L105 194 L107 201 L100 197 L93 201 L95 194 L89 189 L97 188 Z" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+    </g>
+  ),
+  acc_4: () => (
+    // Shiny Earrings on both ears
+    <g id="acc_4">
+      {/* Left Earring */}
+      <circle cx="43" cy="122" r="4.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+      <circle cx="43" cy="122" r="2.5" fill="#ffffff" />
+      <path d="M43 118 L43 126 M39 122 L47 122" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
+      
+      {/* Right Earring */}
+      <circle cx="157" cy="122" r="4.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+      <circle cx="157" cy="122" r="2.5" fill="#ffffff" />
+      <path d="M157 118 L157 126 M153 122 L161 122" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
+    </g>
+  ),
+  acc_5: () => (
+    // Cigar
+    <g id="acc_5">
+      {/* Rising Animated / Stylized Smoke Swirls */}
+      <path d="M148 122 C155 110 146 100 156 86 C164 74 154 62 164 46" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
+      <path d="M150 118 C158 106 152 94 162 82 C168 72 160 60 168 48" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.55" />
+      <circle cx="164" cy="46" r="3.5" fill="#e2e8f0" opacity="0.7" />
+      <circle cx="152" cy="114" r="1.2" fill="#f59e0b" />
+      
+      {/* Cigar Main Brown Body */}
+      <path d="M100 139 L142 127 L144 135 L102 147 Z" fill="#78350f" stroke="#1f2937" strokeWidth="2.8" strokeLinejoin="round" />
+      
+      {/* Tobacco leaf wrapper lines */}
+      <path d="M110 137 L111 145 M122 133 L123 141 M134 130 L135 138" stroke="#451a03" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Gold & Red Premium Cigar Band Ring */}
+      <path d="M116 135 L124 133 L125 141 L117 143 Z" fill="#eab308" stroke="#1f2937" strokeWidth="1.5" />
+      <path d="M119 134 L121 134 L122 142 L120 142 Z" fill="#dc2626" />
+
+      {/* Ash Tip (Gray) */}
+      <path d="M142 127 L148 125.5 L150 133.5 L144 135 Z" fill="#71717a" stroke="#1f2937" strokeWidth="1.5" strokeLinejoin="round" />
+      
+      {/* Glowing Red-Orange Lit Ember */}
+      <path d="M142 127 L144 135" stroke="#ea580c" strokeWidth="2.8" strokeLinecap="round" />
+      <circle cx="145" cy="130" r="1.5" fill="#facc15" />
     </g>
   )
 };

@@ -9,7 +9,7 @@ export const COLOR_PALETTES = {
   ],
   eyes: [
     '#451a03', '#3b82f6', '#10b981', '#06b6d4', 
-    '#8b5cf6', '#f59e0b', '#ef4444', '#71717a'
+    '#8b5cf6', '#f59e0b', '#ef4444', '#dc2626', '#71717a'
   ],
   beard: [
     '#18181b', '#3f2e27', '#78350f', '#ca8a04', 
@@ -28,11 +28,13 @@ export const PART_OPTIONS = {
     { id: 'hair_1', labelKey: 'creator.part.hair_1', file: 'hair/hair_1.svg' },
     { id: 'hair_2', labelKey: 'creator.part.hair_2', file: 'hair/hair_2.svg' },
     { id: 'hair_3', labelKey: 'creator.part.hair_3', file: 'hair/hair_3.svg' },
+    { id: 'hair_4', labelKey: 'creator.part.hair_4', file: 'hair/hair_4.svg' },
   ],
   eyes: [
     { id: 'eyes_1', labelKey: 'creator.part.eyes_1', file: 'eyes/eyes_1.svg' },
     { id: 'eyes_2', labelKey: 'creator.part.eyes_2', file: 'eyes/eyes_2.svg' },
     { id: 'eyes_3', labelKey: 'creator.part.eyes_3', file: 'eyes/eyes_3.svg' },
+    { id: 'eyes_4', labelKey: 'creator.part.eyes_4', file: 'eyes/eyes_4.svg' },
   ],
   beard: [
     { id: 'none', labelKey: 'creator.part.beard_none', file: null },
@@ -45,6 +47,8 @@ export const PART_OPTIONS = {
     { id: 'acc_1', labelKey: 'creator.part.acc_1', file: 'accessories/acc_1.svg' },
     { id: 'acc_2', labelKey: 'creator.part.acc_2', file: 'accessories/acc_2.svg' },
     { id: 'acc_3', labelKey: 'creator.part.acc_3', file: 'accessories/acc_3.svg' },
+    { id: 'acc_4', labelKey: 'creator.part.acc_4', file: 'accessories/acc_4.svg' },
+    { id: 'acc_5', labelKey: 'creator.part.acc_5', file: 'accessories/acc_5.svg' },
   ]
 };
 

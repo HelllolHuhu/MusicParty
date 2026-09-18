@@ -72,6 +72,37 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
     setName(names[Math.floor(Math.random() * names.length)]);
   };
 
+  // Enable mouse wheel horizontal scrolling on PC
+  const handleSliderWheel = (e) => {
+    if (e.deltaY !== 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
+
+  // Enable mouse drag scrolling on PC
+  const handleSliderMouseDown = (e) => {
+    if (e.button !== 0) return;
+    const slider = e.currentTarget;
+    const startX = e.pageX - slider.offsetLeft;
+    const startScrollLeft = slider.scrollLeft;
+
+    const onMouseMove = (ev) => {
+      const x = ev.pageX - slider.offsetLeft;
+      const walk = (x - startX);
+      if (Math.abs(walk) > 3) {
+        slider.scrollLeft = startScrollLeft - walk;
+      }
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
   const tabs = [
     { key: 'head', labelKey: 'creator.tab.head', hasColor: true, colorKey: 'headColor' },
     { key: 'hair', labelKey: 'creator.tab.hair', hasColor: true, colorKey: 'hairColor' },
@@ -118,7 +149,11 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
       <div className="flex-1 w-full min-w-0 flex flex-col justify-between overflow-hidden">
         <div>
           {/* Category Tabs (Single-line Horizontal Slider) */}
-          <div className="horizontal-slider gap-1.5 mb-4 bg-black/30 p-1.5 rounded-2xl border-2 border-black">
+          <div 
+            className="horizontal-slider gap-1.5 mb-4 bg-black/30 p-1.5 rounded-2xl border-2 border-black"
+            onWheel={handleSliderWheel}
+            onMouseDown={handleSliderMouseDown}
+          >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -167,7 +202,11 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
             </div>
 
             {/* Quick Chips Selection (Single-line Horizontal Slider) */}
-            <div className="horizontal-slider gap-2 mt-3 pt-3 border-t border-black/30 pb-1">
+            <div 
+              className="horizontal-slider gap-2 mt-3 pt-3 border-t border-black/30 pb-1"
+              onWheel={handleSliderWheel}
+              onMouseDown={handleSliderMouseDown}
+            >
               {currentOptions.map((opt) => (
                 <button
                   key={opt.id}
@@ -209,7 +248,11 @@ export default function CharacterCreator({ onChange, initialConfig, initialName 
               </div>
 
               {/* Color Swatches (Single-line Horizontal Slider) */}
-              <div className="horizontal-slider gap-2.5 py-1 px-1">
+              <div 
+                className="horizontal-slider gap-2.5 py-1 px-1"
+                onWheel={handleSliderWheel}
+                onMouseDown={handleSliderMouseDown}
+              >
                 {(COLOR_PALETTES[activeTab] || []).map((colorHex) => {
                   const isSelected = config[activeTabConfig.colorKey]?.toLowerCase() === colorHex.toLowerCase();
                   return (

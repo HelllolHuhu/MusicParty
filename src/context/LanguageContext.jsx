@@ -29,9 +29,11 @@ export const TRANSLATIONS = {
     "creator.part.hair_1": "Quiff / Spiky",
     "creator.part.hair_2": "Afro / Curls",
     "creator.part.hair_3": "Mohawk / Punk",
+    "creator.part.hair_4": "Durag",
     "creator.part.eyes_1": "Classic",
     "creator.part.eyes_2": "Chill",
     "creator.part.eyes_3": "Sparkle (Anime)",
+    "creator.part.eyes_4": "Crackhead (Redshot)",
     "creator.part.beard_none": "Clean Shaven",
     "creator.part.beard_1": "Full Beard",
     "creator.part.beard_2": "Goatee",
@@ -40,6 +42,8 @@ export const TRANSLATIONS = {
     "creator.part.acc_1": "Sunglasses",
     "creator.part.acc_2": "DJ Headphones",
     "creator.part.acc_3": "Gold Chain",
+    "creator.part.acc_4": "Earrings",
+    "creator.part.acc_5": "Cigar",
 
     // Lobby
     "lobby.newGame": "New Game",
@@ -161,9 +165,11 @@ export const TRANSLATIONS = {
     "creator.part.hair_1": "Quiff / Spiky",
     "creator.part.hair_2": "Afro / Kučery",
     "creator.part.hair_3": "Mohawk / Punk",
+    "creator.part.hair_4": "Durag",
     "creator.part.eyes_1": "Klasické",
     "creator.part.eyes_2": "Pohodové",
     "creator.part.eyes_3": "Iskrivé (Anime)",
+    "creator.part.eyes_4": "Vyhúlené / Červené",
     "creator.part.beard_none": "Oholený",
     "creator.part.beard_1": "Plná brada",
     "creator.part.beard_2": "Kozia briadka",
@@ -172,6 +178,8 @@ export const TRANSLATIONS = {
     "creator.part.acc_1": "Okuliare",
     "creator.part.acc_2": "DJ Slúchadlá",
     "creator.part.acc_3": "Zlatá reťaz",
+    "creator.part.acc_4": "Náušnice",
+    "creator.part.acc_5": "Cigara",
 
     // Lobby
     "lobby.newGame": "Nová Hra",
@@ -293,9 +301,11 @@ export const TRANSLATIONS = {
     "creator.part.hair_1": "Tupé / Picos",
     "creator.part.hair_2": "Afro / Rizos",
     "creator.part.hair_3": "Cresta",
+    "creator.part.hair_4": "Durag",
     "creator.part.eyes_1": "Clásicos",
     "creator.part.eyes_2": "Relajados",
     "creator.part.eyes_3": "Brillantes",
+    "creator.part.eyes_4": "Ojos Rojos / Locos",
     "creator.part.beard_none": "Afeitado",
     "creator.part.beard_1": "Barba Completa",
     "creator.part.beard_2": "Perilla",
@@ -304,6 +314,8 @@ export const TRANSLATIONS = {
     "creator.part.acc_1": "Gafas de Sol",
     "creator.part.acc_2": "Auriculares DJ",
     "creator.part.acc_3": "Cadena de Oro",
+    "creator.part.acc_4": "Pendientes",
+    "creator.part.acc_5": "Puro",
 
     // Lobby
     "lobby.newGame": "Nueva Partida",
@@ -425,9 +437,11 @@ export const TRANSLATIONS = {
     "creator.part.hair_1": "Tolle / Stachelig",
     "creator.part.hair_2": "Afro / Locken",
     "creator.part.hair_3": "Irokesenschnitt",
+    "creator.part.hair_4": "Durag",
     "creator.part.eyes_1": "Klassisch",
     "creator.part.eyes_2": "Entspannt",
     "creator.part.eyes_3": "Funkelnd (Anime)",
+    "creator.part.eyes_4": "Rote / Verrückte Augen",
     "creator.part.beard_none": "Glattrasiert",
     "creator.part.beard_1": "Vollbart",
     "creator.part.beard_2": "Ziegenbart",
@@ -436,6 +450,8 @@ export const TRANSLATIONS = {
     "creator.part.acc_1": "Sonnenbrille",
     "creator.part.acc_2": "DJ-Kopfhörer",
     "creator.part.acc_3": "Goldkette",
+    "creator.part.acc_4": "Ohrringe",
+    "creator.part.acc_5": "Zigarre",
 
     // Lobby
     "lobby.newGame": "Neues Spiel",
