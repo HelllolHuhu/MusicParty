@@ -21,11 +21,13 @@ graph TD
 ```
 
 1. **Lobby (`lobby`)**: Character creation (custom DiceBear avatar & accessories), room creation/joining via 6-character code, player list management, host controls (kick, disband, game time, genre selection), and persistent ambient lobby music.
-2. **Countdown & Song Preview (`playing` start)**: 5-second countdown during which the YouTube audio buffers in the background, followed by a 30-second synchronized preview of a world-famous song in the selected genre with hook timestamps.
-3. **Studio DAW Phase (`playing`) — FL Party Studio**:
-   - **Pillar 1: Channel Rack / Step Sequencer**: 16-step grid with 4-beat color grouping, volume/pan sliders, mute/solo, instant genre templates (Trap, House, Boom-Bap, Lo-Fi, Reggaeton), and "Stamp to Arranger" button.
-   - **Pillar 2: Piano Roll**: Visual 2-octave grid with Scale Lock (Minor Pentatonic, Major, Trap, Blues, etc.), note placing/duration, instrument sound presets (Pluck Synth, Electric Piano, Lead Synth, 808 Sub Bass, Retro Pad), and melody templates.
-   - **Pillar 3: Playlist / Arranger**: 6-track arrangement timeline (Drums, Bass, Chords, Lead, FX, Vocals) with top ruler playhead scrubber, clip stamping/dragging, and vocal take recording with 3-2-1 countdown.
+2. **Countdown & Song Preview (`playing` start)**: 5-second countdown with direct audio stream preloading, followed by a 30-second synchronized unblocked preview clip of an iconic mega-hit in the selected genre with artwork and animated spectrum visualizer.
+3. **Studio DAW Phase (`playing`) — FL Studio Mobile Edition**:
+   - **🎛️ Playlist / Arranger**: Multi-track 30-second timeline arrangement with unified right-column grid, continuous top-to-bottom playhead needle (0.00px offset across ruler and tracks at all zoom levels), clip audition, clip delete, and track channel editor navigation.
+   - **🎯 Reference Song Track**: Built-in target song audio track at the bottom of the arranger for real-time reference audition and playback comparison.
+   - **🥁 Drum Machine Rack**: 16-step pad grid with 4-beat color groupings, sound audition on click, individual sound dropdowns, mute/solo, and "Stamp to Playlist".
+   - **🎹 Touch Keyboard & Piano Roll**: Interactive touch piano controller with real-time key glow, 16-step note grid, Scale Lock assist (Minor Pentatonic, Major, Trap, Blues, etc.), octave shifts, and 5 melodic instruments.
+   - **🎤 Vocal Recording Booth**: Microphone input with 3-2-1 countdown, live duration counter, audio waveform visualizer, audition preview, and direct track placement.
 4. **Presentation Phase (`presenting`)**: Sequential host-controlled playback of each player's creation (Play/Pause/Replay/Next) with real-time synchronized 1–5 star voting by other players.
 5. **Round Results (`round_results`)**: Aggregated round scores calculated from votes and added to cumulative player totals.
 6. **Final Results (`final_results`)**: Final celebratory podium ranking all players, with host option to return everyone to the lobby.
@@ -79,7 +81,8 @@ MusicParty/
     │   ├── LanguageContext.jsx         # Multi-language translation & locale provider (EN, SK, ES, DE)
     │   └── ThemeContext.jsx            # Dark / light theme management
     ├── services/                       # External API and helper services
-    │   └── youtubeService.js           # YouTube Data API client & curated genre mega-hits with timestamps
+    │   ├── musicPreviewService.js      # Direct ~30s unblocked audio preview streams & curated genre hits
+    │   └── youtubeService.js           # Compatibility layer re-exporting music preview service
     └── components/                     # React UI components
         ├── GamePhase.jsx               # Game phase manager (timer, countdown & DAW container)
         ├── Lobby.jsx                   # Lobby home & In-Room manager (atomic host assignment & leave/disband)
@@ -94,18 +97,19 @@ MusicParty/
         │   ├── Navbar.jsx              # Header navbar with language and theme controls
         │   └── ThemeSwitcher.jsx       # Theme toggle button
         ├── game/                       # In-game subcomponents
-        │   ├── CountdownOverlay.jsx    # 5-second countdown with background video pre-buffering
+        │   ├── CountdownOverlay.jsx    # 5-second countdown with direct audio stream preloading
         │   ├── SongCard.jsx            # Genre reveal card popup with audio preview
-        │   ├── SongPreviewOverlay.jsx  # 30-second inspirational YouTube music preview
-        │   └── workspace/              # Digital Audio Workstation (FL Party Studio)
-        │       ├── AudioEngine.js      # Tone.js audio engine, synths & multi-track synchronizer
-        │       ├── MusicWorkspace.jsx  # Master DAW shell & transport manager
-        │       ├── StepSequencerTab.jsx# Channel Rack / 16-step beat maker & genre templates
-        │       ├── PianoRollTab.jsx    # 2-octave Piano Roll with Scale Lock & melodic instruments
-        │       ├── PlaylistArrangerTab.jsx # 6-track 30s timeline arrangement & vocal recording
-        │       ├── SampleBrowserSidebar.jsx# Categorized sound preset library & quick add
-        │       ├── presetData.js       # Beat presets, melodic instruments & chord progressions
-        │       └── scaleUtils.js       # Scale lock definitions (Pentatonic, Minor, Trap, Blues)
+        │   ├── SongPreviewOverlay.jsx  # 30-second unblocked audio preview player with animated visualizers
+        │   └── workspace/              # Digital Audio Workstation (FL Studio Mobile)
+        │       ├── AudioEngine.js      # Tone.js audio engine, synths, live loopers & multi-track synchronizer
+        │       ├── MusicWorkspace.jsx  # Master DAW orchestrator & responsive mobile mode manager
+        │       ├── FLMobileHeader.jsx  # FL Studio Mobile transport header (Play, Stop, Mic, BPM, Tap, Mode Tabs)
+        │       ├── FLMobileArranger.jsx# 6-track 30s playlist timeline with ruler playhead scrubber
+        │       ├── FLMobileDrumRack.jsx# 16-step Drum Machine Rack with sound audition & mute/solo
+        │       ├── FLMobileKeyboard.jsx# Touch piano keyboard + 16-step Piano Roll with Scale Lock
+        │       ├── FLMobileVocalRecorder.jsx # Vocal booth with 3-2-1 countdown, visualizer & audition
+        │       ├── presetData.js       # Melodic instruments, drum sounds & chord progressions
+        │       └── scaleUtils.js       # Music theory & scale lock definitions (Pentatonic, Minor, Trap, Blues)
         └── lobby/                      # Lobby subcomponents
             ├── AvatarPartsSvg.jsx      # Custom SVG accessories & overlays
             ├── AvatarViewer.jsx        # DiceBear renderer with accessory overlays
@@ -233,9 +237,15 @@ All multiplayer state is synchronized under the root `/rooms/{roomId}` path:
   - Melodies and chord progressions from Piano Roll stamp as 4-second blocks onto Tracks 2 & 3.
   - One-shot samples and custom recorded vocal takes fit their exact duration.
 - **Live Microphone Recording**: 3-2-1 countdown flow, exact duration calculation, Base64 WebM audio blob encoding.
-- **Timeline Pointer Movement**: Restricted strictly to the top timeline ruler bar, aligned 1:1 with track dropzones.
+- **Adobe Audition Style Timeline & Proportional Velocity Scrubbing**:
+  - Dragging the playhead across the ruler or track lanes shuttles audio playback at a rate proportional to mouse velocity.
+  - Discrete audio event scheduling starts and synchronizes from any playhead offset (not just clip start points).
+  - Playback advances at 1× using `requestAnimationFrame`, pausing in place and resetting to 00:00:00.000 on stop.
+  - Interactive Zoom (100% to 500% via Ctrl+Scroll or Transport bar slider) with dynamic ruler divisions and high-density waveform re-rendering.
+  - High-precision time display formatted as `HH:MM:SS.mmm`.
+- **Reference Track**: Built-in 30s audio track placed at the bottom of the Arranger for listening and comparing with the original song.
 - **Studio State Lifecycle**: In-memory state only (no localStorage caching), ensuring every new round starts clean.
-- **Synchronized Presentation Playback**: Host commands trigger global audio playback synchronized across all listeners via Firebase `presentationPlaying` and `presentationPlayStartTime`.
+- **Synchronized Presentation Playback**: Host commands trigger global audio playback of the full 30-second song creation (`00:00 / 00:30`), synchronized across all listeners via Firebase `presentationPlaying` and `presentationPlayStartTime`.
 
 ---
 

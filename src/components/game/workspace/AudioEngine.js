@@ -1,11 +1,25 @@
 import * as Tone from 'tone';
 
+export function formatTimeHMSM(seconds) {
+  const totalMs = Math.max(0, Math.floor(seconds * 1000));
+  const ms = (totalMs % 1000).toString().padStart(3, '0');
+  const totalSec = Math.floor(totalMs / 1000);
+  const ss = (totalSec % 60).toString().padStart(2, '0');
+  const totalMin = Math.floor(totalSec / 60);
+  const mm = (totalMin % 60).toString().padStart(2, '0');
+  const hh = Math.floor(totalMin / 60).toString().padStart(2, '0');
+  return `${hh}:${mm}:${ss}.${ms}`;
+}
+
 class AudioEngine {
   constructor() {
     this.parts = {};
     this.players = {};
     this.synths = {};
     this.instruments = {};
+    this.activeAudios = [];
+    this.scrubAudio = null;
+    this.lastScrubStep = -1;
     this.initialized = false;
     this.currentBpm = 130;
     this.currentSwing = 0;
@@ -335,7 +349,85 @@ class AudioEngine {
   }
 
   // --------------------------------------------------------------------------
-  // MULTI-TRACK ARRANGEMENT PLAYBACK (Timeline / Presentation)
+  // ADOBE AUDITION STYLE AUDIO SCRUBBING
+  // --------------------------------------------------------------------------
+  scrubTo(timeInSeconds, velocity = 1, tracks = []) {
+    this.ensureInitialized();
+    const clampedTime = Math.max(0, Math.min(30, timeInSeconds));
+    const absVelocity = Math.abs(velocity);
+    // Audio playback rate proportional to mouse scrub velocity (0.5x to 3.0x)
+    const shuttleRate = Math.min(3.0, Math.max(0.5, absVelocity > 0 ? absVelocity * 1.2 : 1.0));
+
+    // 1. Scrub active unmuted audio clips (Vocal takes / Reference target song)
+    if (tracks && Array.isArray(tracks)) {
+      const activeAudioClip = tracks
+        .filter(t => !t.muted)
+        .flatMap(t => t.clips || [])
+        .find(c => c.url && clampedTime >= c.startAt && clampedTime < (c.startAt + c.duration));
+
+      if (activeAudioClip && activeAudioClip.url) {
+        if (!this.scrubAudio || this.scrubAudio.src !== activeAudioClip.url) {
+          if (this.scrubAudio) {
+            try { this.scrubAudio.pause(); } catch {}
+          }
+          this.scrubAudio = new Audio(activeAudioClip.url);
+        }
+        try {
+          const offset = clampedTime - activeAudioClip.startAt;
+          this.scrubAudio.currentTime = Math.max(0, offset);
+          this.scrubAudio.playbackRate = shuttleRate;
+          this.scrubAudio.play().catch(() => {});
+        } catch {}
+      } else if (this.scrubAudio) {
+        try { this.scrubAudio.pause(); } catch {}
+      }
+
+      // 2. Audible scrub tick for drum & melodic steps
+      const stepDuration = 60 / this.currentBpm / 4;
+      const currentStep16 = Math.floor(clampedTime / stepDuration) % 16;
+
+      if (currentStep16 !== this.lastScrubStep) {
+        this.lastScrubStep = currentStep16;
+        tracks.forEach(track => {
+          if (track.muted || !track.clips) return;
+          track.clips.forEach(clip => {
+            if (clampedTime < clip.startAt || clampedTime >= (clip.startAt + clip.duration)) return;
+
+            // Trigger drum preview tick
+            if (clip.patternData?.steps) {
+              Object.entries(clip.patternData.steps).forEach(([soundKey, stepArr]) => {
+                if (stepArr[currentStep16]) {
+                  this.playDrumAtTime(soundKey, Tone.now());
+                }
+              });
+            }
+            // Trigger melodic note preview tick
+            else if (clip.notes && Array.isArray(clip.notes)) {
+              const activeNotes = clip.notes.filter(n => n.step === currentStep16);
+              const inst = this.instruments[clip.instrument] || this.instruments.pluck;
+              activeNotes.forEach(n => {
+                inst?.triggerAttackRelease(n.note, '16n', Tone.now());
+              });
+            }
+          });
+        });
+      }
+    }
+  }
+
+  stopScrubbing() {
+    if (this.scrubAudio) {
+      try {
+        this.scrubAudio.pause();
+        this.scrubAudio.currentTime = 0;
+      } catch {}
+      this.scrubAudio = null;
+    }
+    this.lastScrubStep = -1;
+  }
+
+  // --------------------------------------------------------------------------
+  // MULTI-TRACK ARRANGEMENT PLAYBACK FROM ANY OFFSET
   // --------------------------------------------------------------------------
   async start(startSeconds = 0) {
     this.ensureInitialized();
@@ -343,13 +435,33 @@ class AudioEngine {
     if (Tone.context.state !== 'running') {
       await Tone.context.resume();
     }
-    Tone.Transport.seconds = startSeconds;
+    Tone.Transport.seconds = Math.max(0, startSeconds);
     Tone.Transport.start();
   }
 
   seek(seconds = 0) {
     this.ensureInitialized();
-    Tone.Transport.seconds = Math.max(0, seconds);
+    const targetSec = Math.max(0, seconds);
+    Tone.Transport.seconds = targetSec;
+
+    // Reposition any active HTML5 audio streams
+    if (this.activeAudios && this.activeAudios.length > 0) {
+      this.activeAudios.forEach(item => {
+        try {
+          const audio = item.audio || item;
+          const clipStart = item.clipStart || 0;
+          const clipEnd = clipStart + (item.duration || 30);
+          if (targetSec >= clipStart && targetSec < clipEnd) {
+            audio.currentTime = targetSec - clipStart;
+            if (Tone.Transport.state === 'started') {
+              audio.play().catch(() => {});
+            }
+          } else {
+            audio.pause();
+          }
+        } catch {}
+      });
+    }
   }
 
   stop() {
@@ -358,13 +470,35 @@ class AudioEngine {
       Tone.Transport.clear(this.liveLoopId);
       this.liveLoopId = null;
     }
+    this.stopScrubbing();
+    if (this.activeAudios && this.activeAudios.length > 0) {
+      this.activeAudios.forEach(item => {
+        try {
+          const a = item.audio || item;
+          a.pause();
+          a.currentTime = 0;
+        } catch {}
+      });
+      this.activeAudios = [];
+    }
     Tone.Transport.pause();
     Tone.Transport.stop();
   }
 
   disposeAll() {
+    this.stopScrubbing();
+    if (this.activeAudios && this.activeAudios.length > 0) {
+      this.activeAudios.forEach(item => {
+        try {
+          const a = item.audio || item;
+          a.pause();
+          a.currentTime = 0;
+        } catch {}
+      });
+      this.activeAudios = [];
+    }
     Object.values(this.parts).forEach(part => {
-      try { part.dispose(); } catch { /* ignore */ }
+      try { part.dispose(); } catch {}
     });
     this.parts = {};
   }
@@ -373,6 +507,7 @@ class AudioEngine {
     if (!tracks || !Array.isArray(tracks)) return 15;
     let max = 0;
     tracks.forEach(t => {
+      if (t.isReference) return;
       if (t.clips) {
         t.clips.forEach(c => {
           const end = (c.startAt || 0) + (c.duration || 1);
@@ -383,7 +518,8 @@ class AudioEngine {
     return Math.min(30, Math.max(5, Math.ceil(max)));
   }
 
-  async syncTracks(tracks, isLooping = true, loopEnd = 30) {
+  // Synchronize multi-track arrangement scheduling starting from ANY playhead offset!
+  async syncTracks(tracks, isLooping = true, loopEnd = 30, startOffset = 0) {
     this.ensureInitialized();
     this.disposeAll();
 
@@ -395,54 +531,106 @@ class AudioEngine {
       Tone.Transport.loopEnd = loopEnd;
     }
 
+    const stepDuration = 60 / this.currentBpm / 4; // 16th note in seconds
+
     tracks.forEach(track => {
       if (track.muted || !track.clips || track.clips.length === 0) return;
 
-      const events = track.clips.map(clip => ({
-        time: clip.startAt || 0,
-        duration: clip.duration || 1,
-        sampleId: clip.sampleId,
-        isVocal: Boolean(clip.url || clip.isVocal),
-        url: clip.url,
-        name: clip.name,
-        notes: clip.notes || null,
-        instrument: clip.instrument || 'pluck',
-        patternData: clip.patternData || null
-      }));
+      const events = [];
 
-      const part = new Tone.Part((time, value) => {
-        try {
-          // 1. Vocal Recording Playback via HTML5 Audio
-          if (value.isVocal && value.url) {
-            const audio = new Audio(value.url);
-            audio.currentTime = 0;
-            audio.play().catch(e => console.warn("Vocal play error:", e));
+      track.clips.forEach(clip => {
+        const clipStart = clip.startAt || 0;
+        const clipDur = clip.duration || 1;
+        const clipEnd = clipStart + clipDur;
+
+        // 1. Audio Clips (Vocals & Reference Tracks)
+        if (clip.url) {
+          // If playback starts inside this clip, start immediately at the offset
+          if (startOffset >= clipStart && startOffset < clipEnd) {
+            const audio = new Audio(clip.url);
+            const offset = startOffset - clipStart;
+            audio.currentTime = offset;
+            audio.play().catch(e => console.warn("Audio offset play error:", e));
+            this.activeAudios.push({ audio, clipStart, duration: clipDur });
           }
-          // 2. Pattern Blocks (Pattern 1 Drums or Melody)
-          else if (value.patternData) {
-            this.playPatternEvent(value.patternData, time);
-          }
-          // 3. Piano Roll Notes on Timeline Clip
-          else if (value.notes && Array.isArray(value.notes)) {
-            const inst = this.instruments[value.instrument] || this.instruments.pluck;
-            value.notes.forEach(n => {
-              const noteOffset = (n.step || 0) * (60 / this.currentBpm / 4);
-              inst?.triggerAttackRelease(n.note, `${(n.length || 2) * 0.12}s`, time + noteOffset);
+          // Also schedule future playback when loop wraps or if clip starts in future
+          events.push({
+            time: clipStart,
+            duration: clipDur,
+            type: 'audio',
+            url: clip.url,
+            name: clip.name
+          });
+        }
+
+        // 2. Drum Pattern Blocks
+        else if (clip.patternData?.steps) {
+          const repeatCount = Math.ceil(clipDur / (stepDuration * 16));
+          for (let bar = 0; bar < repeatCount; bar++) {
+            const barStart = clipStart + (bar * 16 * stepDuration);
+            if (barStart >= clipEnd) break;
+
+            Object.entries(clip.patternData.steps).forEach(([soundKey, stepArr]) => {
+              stepArr.forEach((isActive, stepIdx) => {
+                if (!isActive) return;
+                const hitTime = barStart + (stepIdx * stepDuration);
+                if (hitTime >= clipStart && hitTime < clipEnd) {
+                  events.push({
+                    time: hitTime,
+                    duration: stepDuration,
+                    type: 'drum',
+                    soundKey
+                  });
+                }
+              });
             });
           }
-          // 4. One-Shot Drum and Synth Hits
-          else if (value.sampleId === 's1' || (value.name && value.name.toLowerCase().includes('kick'))) {
-            this.playDrumAtTime('kick', time);
-          } else if (value.sampleId === 's2' || (value.name && value.name.toLowerCase().includes('hat'))) {
-            this.playDrumAtTime('hihat', time);
-          } else if (value.sampleId === 's3' || (value.name && value.name.toLowerCase().includes('bass'))) {
-            this.instruments.bass?.triggerAttackRelease("C2", "4n", time);
-          } else if (value.sampleId === 's4' || (value.name && value.name.toLowerCase().includes('synth'))) {
-            this.instruments.pluck?.triggerAttackRelease("C4", "4n", time);
-          } else if (value.sampleId === 's5' || (value.name && value.name.toLowerCase().includes('scratch'))) {
-            this.playDrumAtTime('scratch', time);
-          } else {
-            this.instruments.keys?.triggerAttackRelease("C4", "4n", time);
+        }
+
+        // 3. Melodic Piano Roll Notes
+        else if (clip.notes && Array.isArray(clip.notes)) {
+          const instKey = clip.instrument || 'pluck';
+          clip.notes.forEach(n => {
+            const noteTime = clipStart + ((n.step || 0) * stepDuration);
+            if (noteTime >= clipStart && noteTime < clipEnd) {
+              events.push({
+                time: noteTime,
+                duration: (n.length || 2) * 0.12,
+                type: 'note',
+                note: n.note,
+                instrument: instKey
+              });
+            }
+          });
+        }
+
+        // 4. One-Shot Drum & Synth Samples
+        else {
+          events.push({
+            time: clipStart,
+            duration: clipDur,
+            type: 'oneshot',
+            sampleId: clip.sampleId,
+            name: clip.name
+          });
+        }
+      });
+
+      // Schedule discrete events across Tone.Transport
+      const part = new Tone.Part((time, value) => {
+        try {
+          if (value.type === 'audio' && value.url) {
+            const audio = new Audio(value.url);
+            audio.currentTime = 0;
+            audio.play().catch(e => console.warn("Scheduled audio play error:", e));
+            this.activeAudios.push({ audio, clipStart: value.time, duration: value.duration });
+          } else if (value.type === 'drum' && value.soundKey) {
+            this.playDrumAtTime(value.soundKey, time);
+          } else if (value.type === 'note' && value.note) {
+            const inst = this.instruments[value.instrument] || this.instruments.pluck;
+            inst?.triggerAttackRelease(value.note, `${value.duration}s`, time);
+          } else if (value.type === 'oneshot') {
+            this.previewSample(value.sampleId, value.name);
           }
         } catch (err) {
           console.error("Playback trigger error:", err);
@@ -451,27 +639,6 @@ class AudioEngine {
 
       this.parts[track.id] = part;
     });
-  }
-
-  playPatternEvent(patternData, time) {
-    if (patternData.type === 'drum' && patternData.steps) {
-      const stepDuration = 60 / this.currentBpm / 4; // 16th note in seconds
-      const repeatCount = patternData.duration ? Math.ceil(patternData.duration / (stepDuration * 16)) : 2;
-
-      for (let bar = 0; bar < repeatCount; bar++) {
-        const barOffset = bar * 16 * stepDuration;
-        if (barOffset >= (patternData.duration || 4)) break;
-
-        Object.entries(patternData.steps).forEach(([soundKey, stepArr]) => {
-          stepArr.forEach((isActive, idx) => {
-            const hitTime = time + barOffset + (idx * stepDuration);
-            if (isActive && hitTime < time + (patternData.duration || 4)) {
-              this.playDrumAtTime(soundKey, hitTime);
-            }
-          });
-        });
-      }
-    }
   }
 }
 

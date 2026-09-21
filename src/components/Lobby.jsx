@@ -6,7 +6,7 @@ import LobbySettings from './lobby/LobbySettings';
 import PlayerList from './lobby/PlayerList';
 import JoinCodeBox from './lobby/JoinCodeBox';
 import { useLanguage } from '../context/LanguageContext';
-import { fetchSongForGenre } from '../services/youtubeService';
+import { fetchSongForGenre } from '../services/musicPreviewService';
 
 export default function Lobby({ onJoin, initialRoomId, initialName, initialAvatarConfig, playerId }) {
   const { t } = useLanguage();

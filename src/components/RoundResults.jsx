@@ -2,7 +2,7 @@ import { useMemo, useEffect } from 'react';
 import { db } from '../firebase';
 import { ref, update } from 'firebase/database';
 import { useLanguage } from '../context/LanguageContext';
-import { fetchSongForGenre } from '../services/youtubeService';
+import { fetchSongForGenre } from '../services/musicPreviewService';
 
 export default function RoundResults({ roomId, roomData, playerId, onLeave }) {
   const { t } = useLanguage();

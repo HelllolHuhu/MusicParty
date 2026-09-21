@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { FaPlay, FaPause, FaStop, FaMicrophone } from 'react-icons/fa';
 import * as Tone from 'tone';
-import { useLanguage } from '../../../context/LanguageContext';
 import { audioEngine } from './AudioEngine';
-import StepSequencerTab from './StepSequencerTab';
-import PianoRollTab from './PianoRollTab';
-import PlaylistArrangerTab from './PlaylistArrangerTab';
-import SampleBrowserSidebar from './SampleBrowserSidebar';
+import FLMobileHeader from './FLMobileHeader';
+import FLMobileArranger from './FLMobileArranger';
+import FLMobileDrumRack from './FLMobileDrumRack';
+import FLMobileKeyboard from './FLMobileKeyboard';
+import FLMobileVocalRecorder from './FLMobileVocalRecorder';
 import { DEFAULT_DRUM_CHANNELS } from './presetData';
 
 const TOTAL_TIMELINE_SECONDS = 30;
@@ -14,57 +13,24 @@ const TOTAL_TIMELINE_SECONDS = 30;
 export default function MusicWorkspace({
   roomId,
   playerId,
-  timeRemaining,
-  isReady,
+  timeRemaining = 120,
+  isReady = false,
   readyStatus,
+  currentSong = null,
   onFinish
 }) {
-  const { t } = useLanguage();
-  
-  // Active DAW Mode: 'sequencer' | 'pianoroll' | 'arranger'
-  const [activeTab, setActiveTab] = useState('sequencer');
-  
-  // Transport State
+  // FL Mobile View Tabs: 'arranger' | 'drums' | 'keys' | 'vocal'
+  const [activeTab, setActiveTab] = useState('arranger');
+
+  // Transport & Audio State
   const [isPlaying, setIsPlaying] = useState(false);
   const [playheadTime, setPlayheadTime] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0); // 0 to 15 for live sequencer / piano roll
+  const [currentStep, setCurrentStep] = useState(0); // 0 to 15
   const [bpm, setBpm] = useState(130);
-  const [swing, setSwing] = useState(0);
-  const [masterVolume, setMasterVolume] = useState(85);
-  const [isMuted, setIsMuted] = useState(false);
+  const [activeTrackId, setActiveTrackId] = useState('t1');
+  const [zoom, setZoom] = useState(1);
 
-  // Micro-tutorial floating toast
-  const [tutorialHint, setTutorialHint] = useState(
-    "💡 Beat Maker: Click pads to build a drum rhythm, hit Play to listen live in an infinite loop, then switch to Arranger to lay out your song!"
-  );
-
-  // Recording State
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingCountdown, setRecordingCountdown] = useState(0);
-  const [micError, setMicError] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const recordStartTimeRef = useRef(0);
-  const recordStartPlayheadRef = useRef(0);
-
-  // Step Sequencer State (Persistent across tab switches)
-  const [sequencerChannels, setSequencerChannels] = useState(DEFAULT_DRUM_CHANNELS);
-  const [sequencerSteps, setSequencerSteps] = useState(() => {
-    const initial = {};
-    DEFAULT_DRUM_CHANNELS.forEach(c => {
-      initial[c.id] = Array(16).fill(false);
-    });
-    // Add default starting kick & snare
-    initial.kick[0] = true;
-    initial.kick[8] = true;
-    initial.snare[4] = true;
-    initial.snare[12] = true;
-    initial.hihat = [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false];
-    return initial;
-  });
-  const [activePatternIndex, setActivePatternIndex] = useState(1);
-
-  // Piano Roll State (Persistent across tab switches)
+  // Keyboard / Piano Roll State
   const [pianoNotes, setPianoNotes] = useState(() => [
     { id: 'n1', note: 'C4', step: 0, length: 2 },
     { id: 'n2', note: 'D#4', step: 2, length: 2 },
@@ -72,55 +38,136 @@ export default function MusicWorkspace({
     { id: 'n4', note: 'A#4', step: 6, length: 2 },
   ]);
   const [pianoInstrument, setPianoInstrument] = useState('pluck');
+  const [rootNote, setRootNote] = useState('C');
+  const [scaleKey, setScaleKey] = useState('minor_pentatonic');
+  const [scaleLock, setScaleLock] = useState(true);
 
-  // Multi-track arrangement timeline (Tracks 1 to 6)
-  const [tracks, setTracks] = useState(() => [
-    { id: 't1', name: '🥁 Beat (Drums)', type: 'audio', volume: 100, muted: false, clips: [] },
-    { id: 't2', name: '🔊 808 Bass', type: 'audio', volume: 100, muted: false, clips: [] },
-    { id: 't3', name: '🎹 Chords & Keys', type: 'audio', volume: 100, muted: false, clips: [] },
-    { id: 't4', name: '⚡ Lead Synth', type: 'audio', volume: 100, muted: false, clips: [] },
-    { id: 't5', name: '🪄 FX & Percs', type: 'audio', volume: 100, muted: false, clips: [] },
-    { id: 't6', name: '🎤 Vocal Take', type: 'vocal', volume: 100, muted: false, clips: [] },
-  ]);
+  // Drum Rack State
+  const [drumChannels, setDrumChannels] = useState(DEFAULT_DRUM_CHANNELS);
+  const [drumSteps, setDrumSteps] = useState(() => {
+    const initial = {};
+    DEFAULT_DRUM_CHANNELS.forEach(c => {
+      initial[c.id] = Array(16).fill(false);
+    });
+    initial.kick[0] = true;
+    initial.kick[8] = true;
+    initial.snare[4] = true;
+    initial.snare[12] = true;
+    initial.hihat = [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false];
+    return initial;
+  });
 
-  // Stamping & Dragging State
-  const [selectedSample, setSelectedSample] = useState(null);
-  const [pointerDrag, setPointerDrag] = useState(null);
-  const [draggingClip, setDraggingClip] = useState(null);
+  // Arrangement Tracks (Tracks 1 to 6 + Reference Song Track at bottom)
+  const [tracks, setTracks] = useState(() => {
+    const baseTracks = [
+      { id: 't1', name: '🥁 Beat (Drums)', type: 'audio', muted: false, clips: [] },
+      { id: 't2', name: '🔊 808 Bass', type: 'audio', muted: false, clips: [] },
+      { id: 't3', name: '🎹 Chords & Keys', type: 'audio', muted: false, clips: [] },
+      { id: 't4', name: '⚡ Lead Synth', type: 'audio', muted: false, clips: [] },
+      { id: 't5', name: '🪄 FX & Percs', type: 'audio', muted: false, clips: [] },
+      { id: 't6', name: '🎤 Vocal Take', type: 'vocal', muted: false, clips: [] },
+    ];
 
-  // Synchronous refs for real-time live audio callbacks
-  const sequencerStepsRef = useRef(sequencerSteps);
-  const sequencerChannelsRef = useRef(sequencerChannels);
+    if (currentSong && (currentSong.preview_url || currentSong.previewUrl)) {
+      baseTracks.push({
+        id: 't_ref',
+        name: `🎯 ${currentSong.title || 'Original Song'}`,
+        type: 'reference',
+        isReference: true,
+        muted: true, // Muted by default so it doesn't clash with user beat unless unmuted
+        clips: [
+          {
+            id: 'clip_ref_target',
+            name: `🎯 ${currentSong.title || 'Original Song'} - Reference`,
+            url: currentSong.preview_url || currentSong.previewUrl,
+            startAt: 0,
+            duration: 30,
+            color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black',
+            isReference: true
+          }
+        ]
+      });
+    }
+
+    return baseTracks;
+  });
+
+  // Ensure reference track exists or updates when currentSong is passed/changed
+  useEffect(() => {
+    if (!currentSong) return;
+    const refUrl = currentSong.preview_url || currentSong.previewUrl;
+    if (!refUrl) return;
+
+    setTracks(prev => {
+      const exists = prev.some(t => t.id === 't_ref');
+      if (exists) {
+        return prev.map(t => t.id === 't_ref' ? {
+          ...t,
+          name: `🎯 ${currentSong.title || 'Original Song'}`,
+          clips: [{
+            id: 'clip_ref_target',
+            name: `🎯 ${currentSong.title || 'Original Song'} - Reference`,
+            url: refUrl,
+            startAt: 0,
+            duration: 30,
+            color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black',
+            isReference: true
+          }]
+        } : t);
+      } else {
+        return [
+          ...prev,
+          {
+            id: 't_ref',
+            name: `🎯 ${currentSong.title || 'Original Song'}`,
+            type: 'reference',
+            isReference: true,
+            muted: true,
+            clips: [
+              {
+                id: 'clip_ref_target',
+                name: `🎯 ${currentSong.title || 'Original Song'} - Reference`,
+                url: refUrl,
+                startAt: 0,
+                duration: 30,
+                color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black',
+                isReference: true
+              }
+            ]
+          }
+        ];
+      }
+    });
+  }, [currentSong]);
+
+  // Contextual Hint Banner
+  const [hintMessage, setHintMessage] = useState(
+    "💡 Adobe Audition Timeline: Click/drag playhead to scrub audio with proportional velocity, use Ctrl+Scroll to zoom, and hit Play to listen from any position!"
+  );
+
+  // Synchronous references for real-time Web Audio Transport loops
+  const drumStepsRef = useRef(drumSteps);
+  const drumChannelsRef = useRef(drumChannels);
   const pianoNotesRef = useRef(pianoNotes);
   const pianoInstrumentRef = useRef(pianoInstrument);
   const tracksRef = useRef(tracks);
-
-  useEffect(() => {
-    sequencerStepsRef.current = sequencerSteps;
-  }, [sequencerSteps]);
-
-  useEffect(() => {
-    sequencerChannelsRef.current = sequencerChannels;
-  }, [sequencerChannels]);
-
-  useEffect(() => {
-    pianoNotesRef.current = pianoNotes;
-  }, [pianoNotes]);
-
-  useEffect(() => {
-    pianoInstrumentRef.current = pianoInstrument;
-  }, [pianoInstrument]);
-
-  useEffect(() => {
-    tracksRef.current = tracks;
-  }, [tracks]);
-
+  const tapTimesRef = useRef([]);
   const animFrameRef = useRef(null);
   const playStartTimeRef = useRef(0);
   const startOffsetRef = useRef(0);
-  const tapTimesRef = useRef([]);
 
-  // Clean up any old leftover localstorage track items
+  useEffect(() => { drumStepsRef.current = drumSteps; }, [drumSteps]);
+  useEffect(() => { drumChannelsRef.current = drumChannels; }, [drumChannels]);
+  useEffect(() => { pianoNotesRef.current = pianoNotes; }, [pianoNotes]);
+  useEffect(() => { pianoInstrumentRef.current = pianoInstrument; }, [pianoInstrument]);
+  useEffect(() => { tracksRef.current = tracks; }, [tracks]);
+
+  // Sync BPM changes with AudioEngine
+  useEffect(() => {
+    audioEngine.setBpm(bpm);
+  }, [bpm]);
+
+  // Clean up any stale localStorage from past sessions
   useEffect(() => {
     try {
       localStorage.removeItem(`track_${roomId}_${playerId}`);
@@ -129,26 +176,8 @@ export default function MusicWorkspace({
     }
   }, [roomId, playerId]);
 
-  // Sync BPM & Swing with AudioEngine
-  useEffect(() => {
-    audioEngine.setBpm(bpm);
-  }, [bpm]);
-
-  useEffect(() => {
-    audioEngine.setSwing(swing);
-  }, [swing]);
-
-  useEffect(() => {
-    if (isMuted) {
-      audioEngine.setMasterVolume(-100);
-    } else {
-      const dbVal = masterVolume === 0 ? -100 : (masterVolume - 85) * 0.4;
-      audioEngine.setMasterVolume(dbVal);
-    }
-  }, [masterVolume, isMuted]);
-
   // --------------------------------------------------------------------------
-  // UNIFIED LIVE PLAYBACK CONTROLLER
+  // TRANSPORT PLAYBACK CONTROLLER (1X via requestAnimationFrame, pause in place, reset to 0 on stop)
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!isPlaying) {
@@ -159,31 +188,31 @@ export default function MusicWorkspace({
       return;
     }
 
-    // 1. BEAT MAKER MODE -> Live Infinite 16-step Sequencer Loop
-    if (activeTab === 'sequencer') {
+    // Mode 1: DRUMS -> Infinite 16-step Drum Machine Loop
+    if (activeTab === 'drums') {
       audioEngine.startSequencerLive(
-        () => sequencerStepsRef.current,
-        () => sequencerChannelsRef.current,
+        () => drumStepsRef.current,
+        () => drumChannelsRef.current,
         (step) => setCurrentStep(step)
       ).catch(console.error);
     }
-    // 2. PIANO ROLL MODE -> Live Infinite 16-step Piano Roll Loop
-    else if (activeTab === 'pianoroll') {
+    // Mode 2: KEYS -> Infinite 16-step Piano Roll / Keyboard Loop
+    else if (activeTab === 'keys') {
       audioEngine.startPianoRollLive(
         () => pianoNotesRef.current,
         () => pianoInstrumentRef.current,
         (step) => setCurrentStep(step)
       ).catch(console.error);
     }
-    // 3. ARRANGER MODE -> 30s Multi-track Timeline Arrangement Playback
+    // Mode 3: PLAYLIST (Arranger) -> 30s Multi-Track Arrangement Playback from current playheadTime
     else if (activeTab === 'arranger') {
       playStartTimeRef.current = performance.now();
       startOffsetRef.current = playheadTime;
 
-      audioEngine.syncTracks(tracksRef.current, true, TOTAL_TIMELINE_SECONDS);
+      audioEngine.syncTracks(tracksRef.current, true, TOTAL_TIMELINE_SECONDS, playheadTime);
       audioEngine.start(playheadTime).catch(console.error);
 
-      const updateArrangerLoop = () => {
+      const updateTimelineScrubber = () => {
         const elapsed = (performance.now() - playStartTimeRef.current) / 1000;
         const currentPos = (startOffsetRef.current + elapsed) % TOTAL_TIMELINE_SECONDS;
         setPlayheadTime(currentPos);
@@ -192,10 +221,10 @@ export default function MusicWorkspace({
         const stepIndex = Math.floor((currentPos / stepDuration) % 16);
         setCurrentStep(stepIndex);
 
-        animFrameRef.current = requestAnimationFrame(updateArrangerLoop);
+        animFrameRef.current = requestAnimationFrame(updateTimelineScrubber);
       };
 
-      animFrameRef.current = requestAnimationFrame(updateArrangerLoop);
+      animFrameRef.current = requestAnimationFrame(updateTimelineScrubber);
     }
 
     return () => {
@@ -206,7 +235,7 @@ export default function MusicWorkspace({
     };
   }, [isPlaying, activeTab]);
 
-  // Spacebar hotkey to Play/Pause & Mode hotkeys [1], [2], [3]
+  // Spacebar Hotkey to Play/Pause & Mode Switch hotkeys
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -214,28 +243,19 @@ export default function MusicWorkspace({
         e.preventDefault();
         togglePlay();
       } else if (e.key === '1') {
-        handleTabSwitch('sequencer');
+        handleTabChange('arranger');
       } else if (e.key === '2') {
-        handleTabSwitch('pianoroll');
+        handleTabChange('drums');
       } else if (e.key === '3') {
-        handleTabSwitch('arranger');
+        handleTabChange('keys');
+      } else if (e.key === '4') {
+        handleTabChange('vocal');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const handleTabSwitch = (tabKey) => {
-    setActiveTab(tabKey);
-    if (tabKey === 'sequencer') {
-      setTutorialHint("💡 Beat Maker: Click pads to make your drum rhythm, then hit Play to listen live!");
-    } else if (tabKey === 'pianoroll') {
-      setTutorialHint("💡 Piano Roll: Scale Lock is ON! Any note you place will sound in-tune and harmonious!");
-    } else if (tabKey === 'arranger') {
-      setTutorialHint("💡 Arranger: Stamp your drum rhythms and melody patterns across the 30s timeline to complete your song!");
-    }
-  };
 
   const togglePlay = async () => {
     audioEngine.ensureInitialized();
@@ -272,372 +292,203 @@ export default function MusicWorkspace({
     }
   };
 
-  // Stamp a drum pattern from Sequencer to Timeline Track 1
-  const handleStampDrumPattern = (patternObj) => {
-    const placeTime = Math.round(playheadTime * 2) / 2;
-    const adjustedStart = Math.min(TOTAL_TIMELINE_SECONDS - patternObj.duration, Math.max(0, placeTime));
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    if (newTab === 'arranger') {
+      setHintMessage("🎛️ Playlist: Click & drag playhead to scrub audio with proportional velocity, use zoom, and listen from any offset!");
+    } else if (newTab === 'drums') {
+      setHintMessage("🥁 Drum Rack: Tap pads to create your beat, hit Play to hear it live, then click 'Stamp to Playlist'!");
+    } else if (newTab === 'keys') {
+      setHintMessage("🎹 Keyboard & Piano Roll: Scale Lock is active! Tap keys and grid to make a catchy melody!");
+    } else if (newTab === 'vocal') {
+      setHintMessage("🎤 Vocal Booth: Record custom vocals, singing, or ad-libs and place them onto your song!");
+    }
+  };
 
+  // Stamp Drum Beat Pattern to Track 1
+  const handleStampDrums = (drumPatternObj) => {
+    const startPos = Math.min(TOTAL_TIMELINE_SECONDS - (drumPatternObj.duration || 4), Math.max(0, Math.floor(playheadTime)));
     const newClip = {
-      id: `drum_pat_${Date.now()}`,
-      name: patternObj.name,
-      color: patternObj.color || 'bg-red-500',
-      startAt: adjustedStart,
-      duration: patternObj.duration || 4,
-      patternData: patternObj
+      id: `drum_clip_${Date.now()}`,
+      name: drumPatternObj.name || '🥁 Drum Beat',
+      color: drumPatternObj.color || 'bg-red-500',
+      startAt: startPos,
+      duration: drumPatternObj.duration || 4,
+      patternData: drumPatternObj
     };
 
     setTracks(prev => prev.map(t => t.id === 't1' ? { ...t, clips: [...t.clips, newClip] } : t));
     setActiveTab('arranger');
-    setTutorialHint(`✓ Stamped "${patternObj.name}" onto Track 1 at 00:${Math.floor(adjustedStart).toString().padStart(2, '0')}!`);
+    setHintMessage(`✓ Stamped "${drumPatternObj.name}" onto Track 1 at 00:${startPos.toString().padStart(2, '0')}!`);
   };
 
-  // Stamp a melody pattern from Piano Roll to Timeline Track 2 or 3
+  // Stamp Melodic Note Pattern to Track 2, 3, or 4
   const handleStampMelody = (melodyObj) => {
-    const targetTrackId = melodyObj.instrument === 'bass' ? 't2' : 't3';
-    const placeTime = Math.round(playheadTime * 2) / 2;
-    const adjustedStart = Math.min(TOTAL_TIMELINE_SECONDS - melodyObj.duration, Math.max(0, placeTime));
+    let targetTrack = 't3';
+    if (melodyObj.instrument === 'bass') targetTrack = 't2';
+    else if (melodyObj.instrument === 'lead') targetTrack = 't4';
 
+    const startPos = Math.min(TOTAL_TIMELINE_SECONDS - (melodyObj.duration || 4), Math.max(0, Math.floor(playheadTime)));
     const newClip = {
-      id: `melody_pat_${Date.now()}`,
-      name: melodyObj.name,
-      instrument: melodyObj.instrument,
+      id: `melody_clip_${Date.now()}`,
+      name: melodyObj.name || '🎹 Melody',
       color: melodyObj.color || 'bg-purple-500',
-      startAt: adjustedStart,
+      startAt: startPos,
       duration: melodyObj.duration || 4,
-      notes: melodyObj.notes
+      notes: melodyObj.notes,
+      instrument: melodyObj.instrument
     };
 
-    setTracks(prev => prev.map(t => t.id === targetTrackId ? { ...t, clips: [...t.clips, newClip] } : t));
+    setTracks(prev => prev.map(t => t.id === targetTrack ? { ...t, clips: [...t.clips, newClip] } : t));
     setActiveTab('arranger');
-    setTutorialHint(`✓ Stamped "${melodyObj.name}" onto ${targetTrackId === 't2' ? 'Bass Track' : 'Keys/Synth Track'}!`);
+    setHintMessage(`✓ Stamped "${melodyObj.name}" onto ${tracks.find(t => t.id === targetTrack)?.name || 'Track'}!`);
   };
 
-  // Quick 1-click Add from Sidebar
-  const handleQuickAdd = (sample) => {
-    let targetTrackId = 't1';
-    if (sample.category === 'Bass') targetTrackId = 't2';
-    else if (sample.category === 'Melody') targetTrackId = 't3';
-    else if (sample.category === 'FX') targetTrackId = 't5';
-
-    const placeTime = Math.round(playheadTime * 2) / 2;
-    const duration = sample.duration || 1;
-    const adjustedStart = Math.min(TOTAL_TIMELINE_SECONDS - duration, Math.max(0, placeTime));
-
-    const newClip = {
-      id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      sampleId: sample.id,
-      name: sample.name,
-      category: sample.category,
-      color: sample.color,
-      startAt: adjustedStart,
-      duration: duration
+  // Add Vocal Clip
+  const handleAddVocalClip = ({ trackId, url, duration, startAt, name }) => {
+    const newVocalClip = {
+      id: `vocal_clip_${Date.now()}`,
+      name: name || '🎤 Vocal Take',
+      color: 'bg-emerald-500',
+      startAt: Math.min(TOTAL_TIMELINE_SECONDS - duration, Math.max(0, startAt)),
+      duration: duration || 4,
+      url,
+      isVocal: true
     };
 
-    setTracks(prev => prev.map(t => t.id === targetTrackId ? { ...t, clips: [...t.clips, newClip] } : t));
+    setTracks(prev => prev.map(t => t.id === trackId ? { ...t, clips: [...t.clips, newVocalClip] } : t));
+    setActiveTab('arranger');
+    setHintMessage(`✓ Saved vocal take to ${tracks.find(t => t.id === trackId)?.name || 'Track'}!`);
   };
 
-  // Vocal Take Recording with 3-2-1 Countdown
-  const startRecordingFlow = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      setRecordingCountdown(3);
-      const cInterval = setInterval(() => {
-        setRecordingCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(cInterval);
-            beginActualRecording(stream);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (err) {
-      console.error("Mic access error:", err);
-      setMicError(t('game.allowMic') || "Please allow microphone access!");
-      setTimeout(() => setMicError(null), 4000);
+  // Add Track
+  const handleAddTrack = () => {
+    const userTrackCount = tracks.filter(t => !t.isReference).length + 1;
+    const newTrack = {
+      id: `t${Date.now()}`,
+      name: `🎵 Track ${userTrackCount}`,
+      type: 'audio',
+      muted: false,
+      clips: []
+    };
+
+    // Insert before reference track if it exists
+    setTracks(prev => {
+      const refIdx = prev.findIndex(t => t.id === 't_ref');
+      if (refIdx !== -1) {
+        const next = [...prev];
+        next.splice(refIdx, 0, newTrack);
+        return next;
+      }
+      return [...prev, newTrack];
+    });
+  };
+
+  // Open Track Editor when clicking track header in arranger
+  const handleOpenTrackEditor = (track) => {
+    if (track.isReference) return;
+    if (track.id === 't1') {
+      setActiveTab('drums');
+    } else if (track.id === 't6' || track.type === 'vocal') {
+      setActiveTab('vocal');
+    } else {
+      if (track.id === 't2') setPianoInstrument('bass');
+      else if (track.id === 't4') setPianoInstrument('lead');
+      else setPianoInstrument('pluck');
+      setActiveTab('keys');
     }
   };
 
-  const beginActualRecording = (stream) => {
-    try {
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      recordStartTimeRef.current = Date.now();
-      recordStartPlayheadRef.current = playheadTime;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const elapsedSec = Math.max(0.5, Math.min(
-          TOTAL_TIMELINE_SECONDS,
-          Math.round(((Date.now() - recordStartTimeRef.current) / 1000) * 10) / 10
-        ));
-
-        const mimeType = mediaRecorder.mimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Url = reader.result;
-          const startPos = Math.min(
-            TOTAL_TIMELINE_SECONDS - elapsedSec,
-            Math.max(0, Math.round(recordStartPlayheadRef.current * 2) / 2)
-          );
-
-          const newVocalClip = {
-            id: `vocal_${Date.now()}`,
-            name: `🎙️ Vocal (${elapsedSec}s)`,
-            color: 'bg-emerald-500',
-            startAt: startPos,
-            duration: elapsedSec,
-            url: base64Url,
-            isVocal: true
-          };
-
-          setTracks(prev => {
-            const next = [...prev];
-            const vTrackIndex = next.findIndex(t => t.type === 'vocal');
-            const targetIdx = vTrackIndex !== -1 ? vTrackIndex : (next.length - 1);
-            next[targetIdx] = {
-              ...next[targetIdx],
-              clips: [...next[targetIdx].clips, newVocalClip]
-            };
-            return next;
-          });
-
-          setActiveTab('arranger');
-          setTutorialHint(`✓ Vocal take recorded (${elapsedSec}s) and placed on timeline!`);
-        };
-
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setIsPlaying(true);
-    } catch (e) {
-      console.error("Recording start error:", e);
-      setMicError("Microphone initialization failed");
-      setTimeout(() => setMicError(null), 4000);
-    }
-  };
-
-  const stopRecordingFlow = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPlaying(false);
-    }
+  // Submit track without reference track
+  const handleFinish = () => {
+    const playerCreationTracks = tracks.filter(t => !t.isReference);
+    onFinish?.(playerCreationTracks);
   };
 
   return (
-    <div className="flex h-full bg-zinc-950 text-white rounded-xl overflow-hidden border-2 border-zinc-800 relative flex-col">
+    <div className="flex flex-col h-full w-full bg-zinc-950 text-white rounded-2xl overflow-hidden border-2 border-black shadow-[0_6px_0_0_#000] relative">
       
-      {/* Mic Error Banner */}
-      {micError && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white font-black text-xs px-4 py-2 rounded-xl border border-black shadow-[0_4px_0_0_#000] animate-bounce">
-          {micError}
-        </div>
-      )}
+      {/* Adobe Audition / FL Mobile Header Transport Bar */}
+      <FLMobileHeader
+        activeTab={activeTab}
+        setActiveTab={handleTabChange}
+        isPlaying={isPlaying}
+        onTogglePlay={togglePlay}
+        onStop={handleStop}
+        isRecording={false}
+        onToggleRecord={() => setActiveTab('vocal')}
+        bpm={bpm}
+        setBpm={setBpm}
+        onTapTempo={handleTapTempo}
+        playheadTime={playheadTime}
+        timeRemaining={timeRemaining}
+        isReady={isReady}
+        readyStatus={readyStatus}
+        zoom={zoom}
+        setZoom={setZoom}
+        onFinish={handleFinish}
+      />
 
-      {/* Floating Drag Avatar */}
-      {pointerDrag && (
-        <div
-          className={`fixed pointer-events-none z-50 px-3 py-1.5 rounded-xl border-2 border-black font-black text-xs text-black shadow-2xl scale-110 -translate-x-1/2 -translate-y-1/2 ${pointerDrag.sample.color}`}
-          style={{ left: pointerDrag.x, top: pointerDrag.y }}
-        >
-          🎵 {pointerDrag.sample.name}
-        </div>
-      )}
-
-      {/* Top Master DAW Toolbar */}
-      <div className="h-16 bg-zinc-900 border-b-2 border-zinc-800 flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3 select-none">
-        
-        {/* Left: Transport Controls (Play, Stop, Record, BPM, Swing) */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          
-          {/* Play / Pause */}
-          <button
-            onClick={togglePlay}
-            className={`w-11 h-11 rounded-2xl border-2 border-black font-black flex items-center justify-center text-lg shadow-[0_3px_0_0_#000] active:translate-y-0.5 active:shadow-[0_1px_0_0_#000] transition-all ${
-              isPlaying
-                ? 'bg-amber-400 hover:bg-amber-300 text-black animate-pulse'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-white'
-            }`}
-            title={isPlaying ? "Pause Studio (Space)" : "Play Studio (Space)"}
-          >
-            {isPlaying ? <FaPause size={15} /> : <FaPlay size={15} className="ml-0.5" />}
-          </button>
-
-          {/* Stop / Rewind */}
-          <button
-            onClick={handleStop}
-            className="w-10 h-10 rounded-2xl border-2 border-black bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-sm shadow-[0_2px_0_0_#000] active:translate-y-0.5 transition-all"
-            title="Stop & Rewind to Start"
-          >
-            <FaStop size={12} />
-          </button>
-
-          {/* Vocal Record Button */}
-          <button
-            onClick={isRecording ? stopRecordingFlow : startRecordingFlow}
-            className={`w-10 h-10 rounded-2xl border-2 border-black flex items-center justify-center text-sm shadow-[0_2px_0_0_#000] active:translate-y-0.5 transition-all ${
-              isRecording
-                ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]'
-                : 'bg-zinc-800 hover:bg-red-500/30 text-red-400 hover:text-white'
-            }`}
-            title={isRecording ? "Stop Recording" : "Record Vocal Take"}
-          >
-            <FaMicrophone size={14} />
-          </button>
-
-          {/* BPM Controller */}
-          <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1.5 rounded-xl border border-zinc-800">
-            <span className="text-[10px] font-black uppercase text-pink-400">BPM</span>
-            <input
-              type="number"
-              min="60"
-              max="200"
-              value={bpm}
-              onChange={(e) => setBpm(Math.max(60, Math.min(200, Number(e.target.value))))}
-              className="w-12 bg-transparent text-white font-mono font-black text-xs text-center outline-none"
-            />
-            <button
-              onClick={handleTapTempo}
-              className="text-[9px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-black px-1.5 py-0.5 rounded border border-zinc-700 active:scale-95"
-              title="Click in rhythm to tap tempo"
-            >
-              TAP
-            </button>
-          </div>
-
-          {/* Time Scrubber Display */}
-          <div className="bg-black/60 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono font-bold text-xs text-yellow-300 flex items-center gap-1">
-            <span>⏱ 00:{Math.floor(playheadTime).toString().padStart(2, '0')} / 00:30</span>
-          </div>
-        </div>
-
-        {/* Center: Mode Switcher Tabs (Sequencer, Piano Roll, Arranger) */}
-        <div className="flex bg-zinc-950 p-1 rounded-2xl border-2 border-black gap-1 shadow-inner">
-          {[
-            { key: 'sequencer', label: '🥁 Beat Maker', hotkey: '1' },
-            { key: 'pianoroll', label: '🎹 Piano Roll', hotkey: '2' },
-            { key: 'arranger', label: '🎛️ Arranger', hotkey: '3' },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabSwitch(tab.key)}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
-                activeTab === tab.key
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-[0_2px_0_0_#000] scale-105'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className="text-[9px] bg-black/40 px-1 rounded opacity-75">[{tab.hotkey}]</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Right: Round Timer & Finish Button */}
-        <div className="flex items-center gap-3">
-          
-          {/* Creation Timer */}
-          <div className="font-mono text-lg font-black text-pink-500 bg-black/60 px-3 py-1 rounded-xl border border-zinc-800">
-            {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-          </div>
-
-          {/* Finish Track */}
-          <button
-            onClick={() => onFinish(tracks)}
-            className={`btn-chunky font-black text-xs sm:text-sm px-4 py-2 transition-all flex items-center gap-1.5 ${
-              isReady
-                ? 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse'
-                : 'btn-chunky-green'
-            }`}
-          >
-            <span>{isReady ? '✓ Ready!' : t('game.finishTrack')}</span>
-            {isReady && readyStatus && (
-              <span className="bg-black/30 px-1.5 py-0.5 rounded font-mono text-[10px]">
-                ({readyStatus.ready}/{readyStatus.total})
-              </span>
-            )}
-          </button>
-        </div>
-
+      {/* Floating Micro-Tutorial / Hint Ribbon */}
+      <div className="bg-gradient-to-r from-orange-950/40 via-amber-950/30 to-zinc-950 px-4 py-1 border-b border-zinc-900 text-center text-[11px] font-bold text-orange-300 select-none shrink-0 truncate">
+        {hintMessage}
       </div>
 
-      {/* Floating Tutorial Hint Banner */}
-      <div className="bg-gradient-to-r from-pink-950/40 via-purple-950/40 to-zinc-950 px-4 py-1 border-b border-zinc-800 text-center text-xs font-bold text-pink-300">
-        {tutorialHint}
-      </div>
-
-      {/* Main Studio Body Workspace */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      {/* Main Active Viewport */}
+      <div className="flex-1 flex min-h-0 bg-zinc-950 overflow-hidden relative">
         
-        {/* Left Sample Browser */}
-        <SampleBrowserSidebar
-          selectedSample={selectedSample}
-          setSelectedSample={setSelectedSample}
-          onQuickAdd={handleQuickAdd}
-          onPointerDragStart={(sample, x, y) => setPointerDrag({ sample, x, y })}
-        />
+        {activeTab === 'arranger' && (
+          <FLMobileArranger
+            tracks={tracks}
+            setTracks={setTracks}
+            activeTrackId={activeTrackId}
+            setActiveTrackId={setActiveTrackId}
+            playheadTime={playheadTime}
+            setPlayheadTime={setPlayheadTime}
+            onOpenTrackEditor={handleOpenTrackEditor}
+            onAddTrack={handleAddTrack}
+            zoom={zoom}
+            setZoom={setZoom}
+          />
+        )}
 
-        {/* Center Active Tab Workspace */}
-        <div className="flex-1 flex flex-col min-w-0 bg-zinc-950 overflow-hidden">
-          {activeTab === 'sequencer' && (
-            <StepSequencerTab
-              stepCount={16}
-              steps={sequencerSteps}
-              setSteps={setSequencerSteps}
-              channels={sequencerChannels}
-              setChannels={setSequencerChannels}
-              activePatternIndex={activePatternIndex}
-              setActivePatternIndex={setActivePatternIndex}
-              onStampToPlaylist={handleStampDrumPattern}
-              isPlaying={isPlaying}
-              currentStep={currentStep}
-            />
-          )}
+        {activeTab === 'drums' && (
+          <FLMobileDrumRack
+            steps={drumSteps}
+            setSteps={setDrumSteps}
+            channels={drumChannels}
+            setChannels={setDrumChannels}
+            onStampToPlaylist={handleStampDrums}
+            isPlaying={isPlaying}
+            currentStep={currentStep}
+          />
+        )}
 
-          {activeTab === 'pianoroll' && (
-            <PianoRollTab
-              notes={pianoNotes}
-              setNotes={setPianoNotes}
-              selectedInstrument={pianoInstrument}
-              setSelectedInstrument={setPianoInstrument}
-              onStampToPlaylist={handleStampMelody}
-              isPlaying={isPlaying}
-              currentStep={currentStep}
-            />
-          )}
+        {activeTab === 'keys' && (
+          <FLMobileKeyboard
+            notes={pianoNotes}
+            setNotes={setPianoNotes}
+            instrument={pianoInstrument}
+            setInstrument={setPianoInstrument}
+            rootNote={rootNote}
+            setRootNote={setRootNote}
+            scaleKey={scaleKey}
+            setScaleKey={setScaleKey}
+            scaleLock={scaleLock}
+            setScaleLock={setScaleLock}
+            onStampToPlaylist={handleStampMelody}
+            isPlaying={isPlaying}
+            currentStep={currentStep}
+          />
+        )}
 
-          {activeTab === 'arranger' && (
-            <PlaylistArrangerTab
-              tracks={tracks}
-              setTracks={setTracks}
-              playheadTime={playheadTime}
-              setPlayheadTime={setPlayheadTime}
-              isPlaying={isPlaying}
-              selectedSample={selectedSample}
-              setSelectedSample={setSelectedSample}
-              pointerDrag={pointerDrag}
-              setPointerDrag={setPointerDrag}
-              draggingClip={draggingClip}
-              setDraggingClip={setDraggingClip}
-              onRecordStart={startRecordingFlow}
-              onRecordStop={stopRecordingFlow}
-              isRecording={isRecording}
-              recordingCountdown={recordingCountdown}
-            />
-          )}
-        </div>
+        {activeTab === 'vocal' && (
+          <FLMobileVocalRecorder
+            onAddVocalClip={handleAddVocalClip}
+            tracks={tracks}
+            playheadTime={playheadTime}
+          />
+        )}
 
       </div>
 

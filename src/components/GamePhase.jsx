@@ -94,6 +94,7 @@ export default function GamePhase({ roomId, roomData, playerId }) {
           timeRemaining={timeLeft}
           isReady={isMyTrackReady}
           readyStatus={{ ready: readyPlayersCount, total: playersList.length }}
+          currentSong={roomData.currentSong}
           onFinish={handleFinishTrack}
         />
       </div>

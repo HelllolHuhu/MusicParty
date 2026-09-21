@@ -26,9 +26,8 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
 
   const trackData = roomData.tracks?.[currentPresenterId];
   const tracksList = trackData?.tracks || [];
-  const trackDuration = useMemo(() => {
-    return audioEngine.getTrackDuration(tracksList);
-  }, [tracksList]);
+  const PRESENTATION_DURATION = 30;
+  const trackDuration = PRESENTATION_DURATION;
 
   const isPlaying = Boolean(roomData.presentationPlaying);
   const playStartTime = roomData.presentationPlayStartTime || 0;
@@ -40,7 +39,7 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
   // Sync Tone audio playback whenever isPlaying or currentPresenterId changes
   useEffect(() => {
     if (isPlaying && tracksList.length > 0) {
-      audioEngine.syncTracks(tracksList, false);
+      audioEngine.syncTracks(tracksList, false, PRESENTATION_DURATION);
       audioEngine.start().catch(console.error);
     } else {
       audioEngine.stop();
