@@ -38,6 +38,7 @@ export default function Lobby({ onJoin, initialRoomId, initialName, initialAvata
           settings: { 
             maxPlayers: 10, 
             timeMinutes: 10, 
+            songDurationSeconds: 60,
             genres: ["Pop", "Hip-Hop", "EDM", "Lo-Fi"] 
           },
           players: {
@@ -248,6 +249,7 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
     const styles = roomData?.settings?.genres || ["Pop"];
     const randomStyle = styles[Math.floor(Math.random() * styles.length)];
     const timeMs = (roomData?.settings?.timeMinutes || 10) * 60 * 1000;
+    const songDurationSeconds = Math.min(180, Math.max(30, roomData?.settings?.songDurationSeconds || 60));
     
     // Fetch a real YouTube song clip for the selected genre
     const song = await fetchSongForGenre(randomStyle);
@@ -255,10 +257,12 @@ Lobby.InRoom = function InRoom({ roomId, roomData, playerId, playerName, avatarC
     // Transition to 5-second countdown first!
     update(ref(db, `rooms/${roomId}`), {
       status: 'countdown',
+      roundId: `round_${Date.now()}`,
       countdownStartTime: Date.now(),
       currentSong: song,
       currentStyle: song.genre || randomStyle,
       gameDurationMs: timeMs,
+      songDurationSeconds,
       tracks: null,
       votes: null
     });

@@ -26,7 +26,7 @@ export default function PresentationPhase({ roomId, roomData, playerId }) {
 
   const trackData = roomData.tracks?.[currentPresenterId];
   const tracksList = trackData?.tracks || [];
-  const PRESENTATION_DURATION = 30;
+  const PRESENTATION_DURATION = Math.min(180, Math.max(30, roomData?.songDurationSeconds || roomData?.settings?.songDurationSeconds || 60));
   const trackDuration = PRESENTATION_DURATION;
 
   const isPlaying = Boolean(roomData.presentationPlaying);

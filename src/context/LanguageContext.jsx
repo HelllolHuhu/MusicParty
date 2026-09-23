@@ -81,6 +81,7 @@ export const TRANSLATIONS = {
     "settings.hostOnly": "Host Only",
     "settings.maxPlayers": "Max Players",
     "settings.timeMinutes": "Creation Time",
+    "settings.songDuration": "Song Duration",
     "settings.genres": "Music Genres (random pick)",
 
     // Game Phase & Studio
@@ -217,6 +218,7 @@ export const TRANSLATIONS = {
     "settings.hostOnly": "Iba Host",
     "settings.maxPlayers": "Max Hráčov",
     "settings.timeMinutes": "Čas na tvorbu",
+    "settings.songDuration": "Dĺžka skladby",
     "settings.genres": "Hudobné Žánre (losuje sa)",
 
     // Game Phase & Studio
@@ -353,6 +355,7 @@ export const TRANSLATIONS = {
     "settings.hostOnly": "Solo Anfitrión",
     "settings.maxPlayers": "Máx. Jugadores",
     "settings.timeMinutes": "Tiempo de Creación",
+    "settings.songDuration": "Duración de la Canción",
     "settings.genres": "Géneros Musicales (aleatorio)",
 
     // Game Phase & Studio
@@ -489,6 +492,7 @@ export const TRANSLATIONS = {
     "settings.hostOnly": "Nur Host",
     "settings.maxPlayers": "Max. Spieler",
     "settings.timeMinutes": "Erstellungszeit",
+    "settings.songDuration": "Song-Länge",
     "settings.genres": "Musikgenres (Zufallsauswahl)",
 
     // Game Phase & Studio

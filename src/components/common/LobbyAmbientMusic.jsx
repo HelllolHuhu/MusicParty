@@ -25,7 +25,9 @@ export default function LobbyAmbientMusic({ isActive = true }) {
           // Autoplay was blocked before user interaction; resume on first user interaction
           const handleFirstUserGesture = () => {
             if (audio && !isMuted && isActive) {
-              audio.play().then(() => setIsPlaying(true)).catch(console.error);
+              audio.play().then(() => setIsPlaying(true)).catch((e) => {
+                if (e.name !== 'AbortError') console.warn("Lobby audio play:", e);
+              });
             }
             window.removeEventListener('click', handleFirstUserGesture);
             window.removeEventListener('keydown', handleFirstUserGesture);
@@ -59,7 +61,9 @@ export default function LobbyAmbientMusic({ isActive = true }) {
         setIsPlaying(false);
       } else if (isActive) {
         audioRef.current.volume = 0.18;
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
+        audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+          if (e.name !== 'AbortError') console.warn("Lobby audio unmute:", e);
+        });
       }
     }
   };

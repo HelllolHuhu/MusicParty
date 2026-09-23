@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaMusic, FaForward, FaVolumeMute, FaVolumeDown, FaVolumeUp } from 'react-icons/fa';
 import { useLanguage } from '../../context/LanguageContext';
+import { fetchLyricsForSong } from '../../services/lyricsService';
 
 const PREVIEW_DURATION = 30;
 
@@ -13,6 +14,12 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
   const [showVolumePopup, setShowVolumePopup] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  // Synced / Plain Lyrics State
+  const [lyricsData, setLyricsData] = useState(null);
+  const [activeLyricIndex, setActiveLyricIndex] = useState(-1);
+  const activeLyricRef = useRef(null);
+  const lyricsContainerRef = useRef(null);
+
   const audioRef = useRef(null);
   const volumePopupRef = useRef(null);
 
@@ -21,6 +28,19 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
   const artist = song?.artist || "Artist";
   const genre = song?.genre || "Pop";
   const thumbnail = song?.thumbnail || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80";
+
+  // Fetch lyrics on song mount
+  useEffect(() => {
+    let isCancelled = false;
+    if (artist && title) {
+      fetchLyricsForSong(artist, title).then(data => {
+        if (!isCancelled && data) {
+          setLyricsData(data);
+        }
+      }).catch(() => {});
+    }
+    return () => { isCancelled = true; };
+  }, [artist, title]);
 
   // Audio Playback Lifecycle
   useEffect(() => {
@@ -38,7 +58,9 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
           setIsPlaying(true);
         })
         .catch((err) => {
-          console.warn("Autoplay audio blocked or pending user interaction:", err);
+          if (err.name !== 'AbortError') {
+            console.warn("Autoplay audio blocked or pending user interaction:", err);
+          }
           setIsPlaying(false);
         });
     }
@@ -48,13 +70,17 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
     };
 
     audio.onerror = (e) => {
-      console.warn("Audio load error:", e);
-      setHasError(true);
+      if (audio && audio.getAttribute('src')) {
+        console.warn("Audio load error:", e);
+        setHasError(true);
+      }
     };
 
     return () => {
+      audio.onended = null;
+      audio.onerror = null;
       audio.pause();
-      audio.src = '';
+      audio.removeAttribute('src');
       audioRef.current = null;
     };
   }, [audioUrl, onComplete]);
@@ -81,12 +107,24 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
     return () => window.removeEventListener('pointerdown', handleOutsideClick);
   }, [showVolumePopup]);
 
-  // Countdown timer synced with songStartTime
+  // Countdown timer synced with songStartTime and synced lyrics tracking
   useEffect(() => {
     const updateCountdown = () => {
-      const elapsed = Math.floor((Date.now() - songStartTime) / 1000);
-      const remaining = Math.max(0, PREVIEW_DURATION - elapsed);
+      const elapsed = Math.max(0, (Date.now() - songStartTime) / 1000);
+      const remaining = Math.max(0, PREVIEW_DURATION - Math.floor(elapsed));
       setSecondsLeft(remaining);
+
+      if (lyricsData?.type === 'synced' && lyricsData.lines) {
+        let activeIdx = -1;
+        for (let i = 0; i < lyricsData.lines.length; i++) {
+          if (lyricsData.lines[i].time <= elapsed) {
+            activeIdx = i;
+          } else {
+            break;
+          }
+        }
+        setActiveLyricIndex(activeIdx);
+      }
 
       if (remaining <= 0) {
         onComplete();
@@ -94,9 +132,19 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, 250);
+    const interval = setInterval(updateCountdown, 200);
     return () => clearInterval(interval);
-  }, [songStartTime, onComplete]);
+  }, [songStartTime, onComplete, lyricsData]);
+
+  // Smooth scroll active lyric line into center of view
+  useEffect(() => {
+    if (activeLyricRef.current && lyricsContainerRef.current) {
+      activeLyricRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [activeLyricIndex]);
 
   const handleVolumeSliderChange = (e) => {
     const newVol = parseFloat(e.target.value);
@@ -117,12 +165,12 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
   const volumePercentage = Math.round(effectiveVolume * 100);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 select-none animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 select-none animate-in zoom-in-95 duration-300 overflow-y-auto">
       
-      <div className="chunky-panel max-w-lg w-full p-6 sm:p-8 flex flex-col items-center border-4 border-black relative overflow-visible shadow-[0_12px_0_0_#000]">
+      <div className={`chunky-panel w-full p-5 sm:p-7 flex flex-col items-center border-4 border-black relative overflow-visible shadow-[0_12px_0_0_#000] transition-all duration-300 ${lyricsData ? 'max-w-3xl' : 'max-w-lg'}`}>
         
         {/* Genre & 30-Second Clip Inspiration Badges */}
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-2 mb-4">
           <span className="bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider px-4 py-1 rounded-full border-2 border-black shadow-[0_3px_0_0_#000]">
             {genre}
           </span>
@@ -131,48 +179,94 @@ export default function SongPreviewOverlay({ song, songStartTime, isHost, onComp
           </span>
         </div>
 
-        {/* Album Artwork & Waveform Container (NO play/pause button) */}
-        <div className="relative w-60 h-60 sm:w-72 sm:h-72 rounded-3xl border-4 border-black shadow-[0_8px_0_0_#000] overflow-hidden mb-5 bg-zinc-900 flex items-center justify-center">
-          <img 
-            src={thumbnail} 
-            alt={title} 
-            className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? 'scale-105' : 'scale-100'}`}
-          />
+        {/* Content Container: 2-columns if lyrics available, otherwise single column */}
+        <div className={`w-full ${lyricsData ? 'grid grid-cols-1 md:grid-cols-2 gap-5 items-center mb-4' : 'flex flex-col items-center mb-4'}`}>
+          
+          {/* Column 1: Album Artwork & Song Details */}
+          <div className="flex flex-col items-center w-full">
+            <div className="relative w-52 h-52 sm:w-64 sm:h-64 rounded-3xl border-4 border-black shadow-[0_8px_0_0_#000] overflow-hidden mb-3 bg-zinc-900 flex items-center justify-center">
+              <img 
+                src={thumbnail} 
+                alt={title} 
+                className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? 'scale-105' : 'scale-100'}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
 
-          {/* Subtle dark vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+              {/* Animated Neon Equalizer Bars at bottom */}
+              {isPlaying && (
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-1.5 h-14 p-2.5 pointer-events-none">
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 bg-gradient-to-t from-purple-500 via-pink-500 to-yellow-400 rounded-full animate-pulse shadow-sm"
+                      style={{
+                        height: `${25 + ((i * 27) % 75)}%`,
+                        animationDuration: `${0.3 + (i % 5) * 0.1}s`
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* Animated Neon Equalizer Bars at bottom */}
-          {isPlaying && (
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-1.5 h-16 p-3 pointer-events-none">
-              {Array.from({ length: 11 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 bg-gradient-to-t from-purple-500 via-pink-500 to-yellow-400 rounded-full animate-pulse shadow-sm"
-                  style={{
-                    height: `${25 + ((i * 27) % 75)}%`,
-                    animationDuration: `${0.3 + (i % 5) * 0.1}s`
-                  }}
-                />
-              ))}
+            {/* Title & Artist */}
+            <div className="text-center w-full px-2">
+              <h2 className="text-xl sm:text-2xl font-black text-white truncate drop-shadow-md mb-0.5">
+                {title}
+              </h2>
+              <p className="text-xs sm:text-sm font-bold text-zinc-300 truncate">
+                {artist}
+              </p>
+            </div>
+          </div>
+
+          {/* Column 2: Lyrics Box (Only if lyricsData is present) */}
+          {lyricsData && (
+            <div className="w-full h-56 sm:h-64 bg-black/60 rounded-3xl border-3 border-black p-3.5 flex flex-col shadow-inner relative overflow-hidden">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-800 text-[11px] font-black uppercase text-pink-400">
+                <span>🎤 {lyricsData.type === 'synced' ? 'Karaoke Lyrics (Synced)' : 'Lyrics'}</span>
+                <span className="text-[9px] text-zinc-400 font-bold bg-zinc-800/80 px-2 py-0.5 rounded-full">
+                  {lyricsData.source || 'lrclib'}
+                </span>
+              </div>
+
+              {/* Lyrics Scrollable Area */}
+              <div 
+                ref={lyricsContainerRef}
+                className="flex-1 overflow-y-auto pr-1 space-y-2 text-center scroll-smooth"
+              >
+                {lyricsData.type === 'synced' ? (
+                  lyricsData.lines.map((line, idx) => {
+                    const isActive = idx === activeLyricIndex;
+                    return (
+                      <div
+                        key={idx}
+                        ref={isActive ? activeLyricRef : null}
+                        className={`text-xs sm:text-sm transition-all duration-200 py-1 px-2 rounded-xl ${
+                          isActive
+                            ? 'text-yellow-300 font-black scale-105 bg-pink-500/20 border border-yellow-400/50 shadow-[0_0_12px_rgba(251,191,36,0.3)]'
+                            : 'text-zinc-400 font-bold hover:text-zinc-200 opacity-60'
+                        }`}
+                      >
+                        {line.text}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs sm:text-sm font-bold text-zinc-300 whitespace-pre-line leading-relaxed">
+                    {lyricsData.text}
+                  </p>
+                )}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Song Details */}
-        <div className="text-center w-full mb-5 px-2">
-          <h2 className="text-2xl sm:text-3xl font-black text-white truncate drop-shadow-md mb-1">
-            {title}
-          </h2>
-          <p className="text-sm sm:text-base font-bold text-zinc-300 truncate">
-            {artist}
-          </p>
         </div>
 
         {/* 30-Second Progress Bar */}
-        <div className="w-full bg-black/60 rounded-full h-4 border-2 border-black overflow-hidden mb-6 shadow-inner relative">
+        <div className="w-full bg-black/60 rounded-full h-3.5 border-2 border-black overflow-hidden mb-5 shadow-inner relative">
           <div 
-            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 transition-all duration-300 ease-linear rounded-full"
+            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 transition-all duration-200 ease-linear rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

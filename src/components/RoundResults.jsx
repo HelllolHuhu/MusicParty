@@ -51,6 +51,7 @@ export default function RoundResults({ roomId, roomData, playerId, onLeave }) {
 
     update(ref(db, `rooms/${roomId}`), {
       status: 'countdown',
+      roundId: `round_${Date.now()}`,
       countdownStartTime: Date.now(),
       currentSong: song,
       currentStyle: song.genre || randomStyle,

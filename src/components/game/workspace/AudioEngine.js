@@ -175,7 +175,12 @@ class AudioEngine {
   // Trigger drum sound at audio clock time
   playDrumAtTime(soundKey, time) {
     this.ensureInitialized();
-    const t = Math.max(Tone.now(), time || Tone.now());
+    if (!this.lastTriggerTimes) this.lastTriggerTimes = {};
+    const now = Tone.now();
+    const prevTime = this.lastTriggerTimes[soundKey] || 0;
+    const t = Math.max(now, (time || now), prevTime + 0.015);
+    this.lastTriggerTimes[soundKey] = t;
+
     try {
       if (soundKey === 'kick' || soundKey === 's1') {
         this.synths.kick?.triggerAttackRelease("C1", "8n", t);
@@ -201,7 +206,7 @@ class AudioEngine {
         this.synths.hihat?.triggerAttackRelease("16n", t);
       }
     } catch (e) {
-      console.warn("Drum trigger error:", e);
+      // AudioParam collision safety fallback
     }
   }
 
@@ -212,12 +217,18 @@ class AudioEngine {
     if (Tone.context.state !== 'running') {
       Tone.context.resume().catch(() => {});
     }
-    const t = Math.max(Tone.now(), time || Tone.now());
+
+    if (!this.lastNoteTriggerTimes) this.lastNoteTriggerTimes = {};
+    const now = Tone.now();
+    const prevTime = this.lastNoteTriggerTimes[instrumentKey] || 0;
+    const t = Math.max(now, (time || now), prevTime + 0.015);
+    this.lastNoteTriggerTimes[instrumentKey] = t;
+
     try {
       const inst = this.instruments[instrumentKey] || this.instruments.pluck;
       inst?.triggerAttackRelease(note, duration, t);
     } catch (e) {
-      console.warn("Note audition error:", e);
+      // AudioParam collision safety fallback
     }
   }
 
@@ -351,9 +362,9 @@ class AudioEngine {
   // --------------------------------------------------------------------------
   // ADOBE AUDITION STYLE AUDIO SCRUBBING
   // --------------------------------------------------------------------------
-  scrubTo(timeInSeconds, velocity = 1, tracks = []) {
+  scrubTo(timeInSeconds, velocity = 1, tracks = [], maxDuration = 60) {
     this.ensureInitialized();
-    const clampedTime = Math.max(0, Math.min(30, timeInSeconds));
+    const clampedTime = Math.max(0, Math.min(maxDuration, timeInSeconds));
     const absVelocity = Math.abs(velocity);
     // Audio playback rate proportional to mouse scrub velocity (0.5x to 3.0x)
     const shuttleRate = Math.min(3.0, Math.max(0.5, absVelocity > 0 ? absVelocity * 1.2 : 1.0));
@@ -439,27 +450,40 @@ class AudioEngine {
     Tone.Transport.start();
   }
 
-  seek(seconds = 0) {
+  seek(seconds = 0, tracks = null) {
     this.ensureInitialized();
     const targetSec = Math.max(0, seconds);
     Tone.Transport.seconds = targetSec;
 
-    // Reposition any active HTML5 audio streams
+    // Reposition / clear any active HTML5 audio streams
     if (this.activeAudios && this.activeAudios.length > 0) {
       this.activeAudios.forEach(item => {
         try {
           const audio = item.audio || item;
-          const clipStart = item.clipStart || 0;
-          const clipEnd = clipStart + (item.duration || 30);
-          if (targetSec >= clipStart && targetSec < clipEnd) {
-            audio.currentTime = targetSec - clipStart;
-            if (Tone.Transport.state === 'started') {
-              audio.play().catch(() => {});
-            }
-          } else {
-            audio.pause();
-          }
+          audio.pause();
+          audio.currentTime = 0;
         } catch {}
+      });
+      this.activeAudios = [];
+    }
+
+    // If tracks provided and transport is currently running, immediately resume audio clips at targetSec
+    if (tracks && Array.isArray(tracks) && Tone.Transport.state === 'started') {
+      tracks.forEach(track => {
+        if (track.muted || !track.clips) return;
+        track.clips.forEach(clip => {
+          const clipStart = clip.startAt || 0;
+          const clipEnd = clipStart + (clip.duration || 30);
+          if (clip.url && targetSec >= clipStart && targetSec < clipEnd) {
+            try {
+              const audio = new Audio(clip.url);
+              audio.currentTime = targetSec - clipStart;
+              audio.volume = Math.max(0, Math.min(1, (track.volume ?? 100) / 100));
+              audio.play().catch(e => console.warn("Seek audio play error:", e));
+              this.activeAudios.push({ audio, clipStart, duration: clip.duration, trackId: track.id });
+            } catch {}
+          }
+        });
       });
     }
   }
@@ -483,6 +507,7 @@ class AudioEngine {
     }
     Tone.Transport.pause();
     Tone.Transport.stop();
+    Tone.Transport.seconds = 0;
   }
 
   disposeAll() {
@@ -503,7 +528,7 @@ class AudioEngine {
     this.parts = {};
   }
 
-  getTrackDuration(tracks) {
+  getTrackDuration(tracks, maxDuration = 180) {
     if (!tracks || !Array.isArray(tracks)) return 15;
     let max = 0;
     tracks.forEach(t => {
@@ -515,11 +540,176 @@ class AudioEngine {
         });
       }
     });
-    return Math.min(30, Math.max(5, Math.ceil(max)));
+    return Math.min(maxDuration, Math.max(5, Math.ceil(max)));
+  }
+
+  // Build scheduled events for a specific track
+  buildTrackEvents(track, stepDuration, startOffset = -1) {
+    if (!track.clips || track.clips.length === 0) return [];
+
+    const events = [];
+
+    track.clips.forEach(clip => {
+      const clipStart = clip.startAt || 0;
+      const clipDur = clip.duration || 1;
+      const clipEnd = clipStart + clipDur;
+
+      // 1. Audio Clips (Vocals & Reference Tracks)
+      if (clip.url) {
+        if (startOffset >= 0 && startOffset >= clipStart && startOffset < clipEnd) {
+          const audio = new Audio(clip.url);
+          const offset = startOffset - clipStart;
+          audio.currentTime = offset;
+          audio.volume = Math.max(0, Math.min(1, (track.volume ?? 100) / 100));
+          audio.play().catch(e => console.warn("Audio offset play error:", e));
+          this.activeAudios.push({ audio, clipStart, duration: clipDur, trackId: track.id });
+        }
+        events.push({
+          time: clipStart,
+          duration: clipDur,
+          type: 'audio',
+          url: clip.url,
+          name: clip.name,
+          trackId: track.id,
+          volume: track.volume ?? 100
+        });
+      }
+
+      // 2. Drum Pattern Blocks
+      else if (clip.patternData?.steps) {
+        const repeatCount = Math.ceil(clipDur / (stepDuration * 16));
+        for (let bar = 0; bar < repeatCount; bar++) {
+          const barStart = clipStart + (bar * 16 * stepDuration);
+          if (barStart >= clipEnd) break;
+
+          Object.entries(clip.patternData.steps).forEach(([soundKey, stepArr]) => {
+            stepArr.forEach((isActive, stepIdx) => {
+              if (!isActive) return;
+              const hitTime = barStart + (stepIdx * stepDuration);
+              if (hitTime >= clipStart && hitTime < clipEnd) {
+                events.push({
+                  time: hitTime,
+                  duration: stepDuration,
+                  type: 'drum',
+                  soundKey,
+                  trackId: track.id
+                });
+              }
+            });
+          });
+        }
+      }
+
+      // 3. Melodic Piano Roll Notes
+      else if (clip.notes && Array.isArray(clip.notes)) {
+        const instKey = clip.instrument || 'pluck';
+        clip.notes.forEach(n => {
+          const noteTime = clipStart + ((n.step || 0) * stepDuration);
+          if (noteTime >= clipStart && noteTime < clipEnd) {
+            events.push({
+              time: noteTime,
+              duration: (n.length || 2) * 0.12,
+              type: 'note',
+              note: n.note,
+              instrument: instKey,
+              trackId: track.id
+            });
+          }
+        });
+      }
+
+      // 4. One-Shot Drum & Synth Samples
+      else {
+        events.push({
+          time: clipStart,
+          duration: clipDur,
+          type: 'oneshot',
+          sampleId: clip.sampleId,
+          name: clip.name,
+          trackId: track.id
+        });
+      }
+    });
+
+    return events;
+  }
+
+  // Create or replace Tone.Part for a single track
+  scheduleTrackPart(track, songDurationSeconds = 60, isLooping = true, startOffset = -1) {
+    if (this.parts[track.id]) {
+      try { this.parts[track.id].dispose(); } catch {}
+      delete this.parts[track.id];
+    }
+
+    if (track.muted || !track.clips || track.clips.length === 0) {
+      return null;
+    }
+
+    const stepDuration = 60 / this.currentBpm / 4;
+    const events = this.buildTrackEvents(track, stepDuration, startOffset);
+    if (events.length === 0) return null;
+
+    const part = new Tone.Part((time, value) => {
+      try {
+        if (value.type === 'audio' && value.url) {
+          const audio = new Audio(value.url);
+          audio.currentTime = 0;
+          audio.volume = Math.max(0, Math.min(1, (value.volume ?? 100) / 100));
+          audio.play().catch(e => console.warn("Scheduled audio play error:", e));
+          this.activeAudios.push({ audio, clipStart: value.time, duration: value.duration, trackId: value.trackId });
+        } else if (value.type === 'drum' && value.soundKey) {
+          this.playDrumAtTime(value.soundKey, time);
+        } else if (value.type === 'note' && value.note) {
+          const inst = this.instruments[value.instrument] || this.instruments.pluck;
+          inst?.triggerAttackRelease(value.note, `${value.duration}s`, time);
+        } else if (value.type === 'oneshot') {
+          this.previewSample(value.sampleId, value.name);
+        }
+      } catch (err) {
+        console.error("Playback trigger error:", err);
+      }
+    }, events);
+
+    part.loop = isLooping;
+    if (isLooping) {
+      part.loopStart = 0;
+      part.loopEnd = songDurationSeconds;
+    }
+    part.start(0);
+
+    this.parts[track.id] = part;
+    return part;
+  }
+
+  // Live update of a single track without stopping or interrupting Tone.Transport!
+  syncTrackLive(track, songDurationSeconds = 60, isLooping = true) {
+    this.ensureInitialized();
+    if (!track) return;
+
+    // Stop any active HTML5 audio for this track
+    if (this.activeAudios && this.activeAudios.length > 0) {
+      this.activeAudios = this.activeAudios.filter(item => {
+        if (item.trackId === track.id) {
+          try {
+            const a = item.audio || item;
+            a.pause();
+            a.currentTime = 0;
+          } catch {}
+          return false;
+        }
+        return true;
+      });
+    }
+
+    const currentPos = Tone.Transport.state === 'started'
+      ? (Tone.Transport.seconds % (songDurationSeconds || 60))
+      : -1;
+
+    this.scheduleTrackPart(track, songDurationSeconds, isLooping, currentPos);
   }
 
   // Synchronize multi-track arrangement scheduling starting from ANY playhead offset!
-  async syncTracks(tracks, isLooping = true, loopEnd = 30, startOffset = 0) {
+  async syncTracks(tracks, isLooping = true, loopEnd = 60, startOffset = 0) {
     this.ensureInitialized();
     this.disposeAll();
 
@@ -531,113 +721,8 @@ class AudioEngine {
       Tone.Transport.loopEnd = loopEnd;
     }
 
-    const stepDuration = 60 / this.currentBpm / 4; // 16th note in seconds
-
     tracks.forEach(track => {
-      if (track.muted || !track.clips || track.clips.length === 0) return;
-
-      const events = [];
-
-      track.clips.forEach(clip => {
-        const clipStart = clip.startAt || 0;
-        const clipDur = clip.duration || 1;
-        const clipEnd = clipStart + clipDur;
-
-        // 1. Audio Clips (Vocals & Reference Tracks)
-        if (clip.url) {
-          // If playback starts inside this clip, start immediately at the offset
-          if (startOffset >= clipStart && startOffset < clipEnd) {
-            const audio = new Audio(clip.url);
-            const offset = startOffset - clipStart;
-            audio.currentTime = offset;
-            audio.play().catch(e => console.warn("Audio offset play error:", e));
-            this.activeAudios.push({ audio, clipStart, duration: clipDur });
-          }
-          // Also schedule future playback when loop wraps or if clip starts in future
-          events.push({
-            time: clipStart,
-            duration: clipDur,
-            type: 'audio',
-            url: clip.url,
-            name: clip.name
-          });
-        }
-
-        // 2. Drum Pattern Blocks
-        else if (clip.patternData?.steps) {
-          const repeatCount = Math.ceil(clipDur / (stepDuration * 16));
-          for (let bar = 0; bar < repeatCount; bar++) {
-            const barStart = clipStart + (bar * 16 * stepDuration);
-            if (barStart >= clipEnd) break;
-
-            Object.entries(clip.patternData.steps).forEach(([soundKey, stepArr]) => {
-              stepArr.forEach((isActive, stepIdx) => {
-                if (!isActive) return;
-                const hitTime = barStart + (stepIdx * stepDuration);
-                if (hitTime >= clipStart && hitTime < clipEnd) {
-                  events.push({
-                    time: hitTime,
-                    duration: stepDuration,
-                    type: 'drum',
-                    soundKey
-                  });
-                }
-              });
-            });
-          }
-        }
-
-        // 3. Melodic Piano Roll Notes
-        else if (clip.notes && Array.isArray(clip.notes)) {
-          const instKey = clip.instrument || 'pluck';
-          clip.notes.forEach(n => {
-            const noteTime = clipStart + ((n.step || 0) * stepDuration);
-            if (noteTime >= clipStart && noteTime < clipEnd) {
-              events.push({
-                time: noteTime,
-                duration: (n.length || 2) * 0.12,
-                type: 'note',
-                note: n.note,
-                instrument: instKey
-              });
-            }
-          });
-        }
-
-        // 4. One-Shot Drum & Synth Samples
-        else {
-          events.push({
-            time: clipStart,
-            duration: clipDur,
-            type: 'oneshot',
-            sampleId: clip.sampleId,
-            name: clip.name
-          });
-        }
-      });
-
-      // Schedule discrete events across Tone.Transport
-      const part = new Tone.Part((time, value) => {
-        try {
-          if (value.type === 'audio' && value.url) {
-            const audio = new Audio(value.url);
-            audio.currentTime = 0;
-            audio.play().catch(e => console.warn("Scheduled audio play error:", e));
-            this.activeAudios.push({ audio, clipStart: value.time, duration: value.duration });
-          } else if (value.type === 'drum' && value.soundKey) {
-            this.playDrumAtTime(value.soundKey, time);
-          } else if (value.type === 'note' && value.note) {
-            const inst = this.instruments[value.instrument] || this.instruments.pluck;
-            inst?.triggerAttackRelease(value.note, `${value.duration}s`, time);
-          } else if (value.type === 'oneshot') {
-            this.previewSample(value.sampleId, value.name);
-          }
-        } catch (err) {
-          console.error("Playback trigger error:", err);
-        }
-      }, events).start(0);
-
-      this.parts[track.id] = part;
+      this.scheduleTrackPart(track, loopEnd, isLooping, startOffset);
     });
   }
 }

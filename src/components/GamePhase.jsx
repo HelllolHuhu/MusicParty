@@ -91,7 +91,9 @@ export default function GamePhase({ roomId, roomData, playerId }) {
         <MusicWorkspace 
           roomId={roomId}
           playerId={playerId}
+          roundId={roomData.roundId || `round_${roomData.startTime || roomData.countdownStartTime || 'default'}`}
           timeRemaining={timeLeft}
+          songDurationSeconds={Math.min(180, Math.max(30, roomData?.songDurationSeconds || roomData?.settings?.songDurationSeconds || 60))}
           isReady={isMyTrackReady}
           readyStatus={{ ready: readyPlayersCount, total: playersList.length }}
           currentSong={roomData.currentSong}
